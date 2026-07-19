@@ -1,0 +1,24 @@
+# Python bytecode and test caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Local environments and secrets
+.venv/
+venv/
+env/
+*.env
+password.env
+
+# Generated crawl data and temporary files
+data/*.sqlite3
+data/*.sqlite3-*
+data/taobao_html/
+*.log
+
+# Editor and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

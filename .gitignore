@@ -14,8 +14,10 @@ password.env
 # Generated crawl data and temporary files
 data/*.sqlite3
 data/*.sqlite3-*
-data/taobao_html/
+data/
 *.log
+.xlsx
+.csv
 
 # Editor and operating-system files
 .vscode/

@@ -1,10 +1,12 @@
 ﻿import json
+import os
 import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
-from src.tests import taobao_batch
+from src import taobao_batch
 
 
 class TaobaoBatchTest(unittest.TestCase):
@@ -66,6 +68,68 @@ class TaobaoBatchTest(unittest.TestCase):
         taobao_batch.fetch_item_html(session, '123', 'addr', 30)
         self.assertIn('cookies', session.kwargs)
         self.assertIn('_m_h5_tk', session.kwargs['cookies'])
+
+    def test_fetch_item_html_uses_cookie_header_from_environment(self):
+        class FakeResponse:
+            status_code = 200
+            url = 'https://detail.tmall.com/item.htm?id=123'
+            text = '<html></html>'
+
+        class FakeSession:
+            def __init__(self):
+                self.kwargs = None
+
+            def get(self, url, **kwargs):
+                self.kwargs = kwargs
+                return FakeResponse()
+
+        session = FakeSession()
+        with mock.patch.dict(os.environ, {'TAOBAO_COOKIE': 'fresh=1; another=2'}, clear=False):
+            taobao_batch.fetch_item_html(session, '123', 'addr', 30)
+        self.assertEqual(session.kwargs['cookies'], {'fresh': '1', 'another': '2'})
+
+    def test_load_shop_item_ids_reads_unique_ids_from_tmall_shop_database(self):
+        with tempfile.TemporaryDirectory() as td:
+            db_path = Path(td) / 'shop.sqlite3'
+            db = sqlite3.connect(db_path)
+            db.executescript('''
+                CREATE TABLE tmall_shop_items (
+                    shop_url TEXT NOT NULL,
+                    item_id TEXT NOT NULL,
+                    PRIMARY KEY (shop_url, item_id)
+                );
+                INSERT INTO tmall_shop_items (shop_url, item_id) VALUES
+                    ('https://iqoo.tmall.com/search.htm', '1001'),
+                    ('https://iqoo.tmall.com/search.htm', '1002'),
+                    ('https://other.tmall.com/search.htm', '2001');
+            ''')
+            db.commit()
+            db.close()
+            self.assertEqual(
+                taobao_batch.load_shop_item_ids(db_path, 'https://iqoo.tmall.com/search.htm'),
+                ['1001', '1002'],
+            )
+
+    def test_crawl_batch_stops_after_first_failed_item(self):
+        class Args:
+            positional_ids = ['1001', '1002']
+            ids = []
+            ids_file = []
+            shop_db = None
+            shop_url = None
+            db = ':memory:'
+            output_dir = ''
+            address_id = None
+            timeout = 30
+            delay_min = 0
+            delay_max = 0
+            reset = False
+
+        with mock.patch.object(
+            taobao_batch, 'fetch_item_html', side_effect=RuntimeError('blocked')
+        ) as fetch_item_html:
+            self.assertEqual(taobao_batch.crawl_batch(Args()), 1)
+        self.assertEqual(fetch_item_html.call_count, 1)
 
     def test_detect_noitem_error_from_html_redirect(self):
         html = '<script>window.location.href = "https://error.item.taobao.com/error/noitem?type=noitem&itemid=123"</script>'

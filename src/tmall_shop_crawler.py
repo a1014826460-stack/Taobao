@@ -5,7 +5,9 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sqlite3
+import time
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -25,7 +27,7 @@ USER_AGENT = (
 class CrawlerConfig:
     shop_url: str
     start_page: int
-    pages: int
+    pages: int | None
     db_path: Path
     timeout: float
     cookies: dict[str, str]
@@ -65,8 +67,12 @@ def build_page_request(shop_url: str, page_number: int) -> tuple[str, dict[str, 
         "lowPrice": query.get("lowPrice", [""])[0],
         "highPrice": query.get("highPrice", [""])[0],
         "pageNo": str(page_number),
-        "callback": "tmallShopCallback",
+        "callback": "jsonp91",
     }
+    # Tmall's legacy endpoint expects these widget identifiers on live requests.
+    params["_ksTS"] = f"{int(time.time() * 1000)}_{page_number}"
+    params["mid"] = "w-14962063618-0"
+    params["wid"] = "14962063618"
     headers = {
         "Accept": "application/javascript, text/javascript, */*; q=0.01",
         "Referer": shop_url,
@@ -76,7 +82,7 @@ def build_page_request(shop_url: str, page_number: int) -> tuple[str, dict[str, 
     return request_url, params, headers
 
 
-def decode_payload(text: str) -> dict[str, Any]:
+def decode_payload(text: str) -> dict[str, Any] | str:
     """Decode a JSON body or one JSONP callback wrapper."""
     body = text.strip()
     if not body:
@@ -90,9 +96,11 @@ def decode_payload(text: str) -> dict[str, Any]:
         json_text = body[opening + 1 :].rstrip().rstrip(";").rstrip()
         if not json_text.endswith(")"):
             raise ValueError("JSONP response is missing closing parenthesis")
-        payload = json.loads(json_text[:-1])
-    if not isinstance(payload, dict):
-        raise ValueError("response payload is not a JSON object")
+        # Legacy Tmall responses can embed raw control characters in the
+        # JSONP string payload, which Python accepts in non-strict mode.
+        payload = json.loads(json_text[:-1], strict=False)
+    if not isinstance(payload, (dict, str)):
+        raise ValueError("response payload is neither a JSON object nor an HTML string")
     return payload
 
 
@@ -113,8 +121,10 @@ def _first_value(item: dict[str, Any], *keys: str) -> str:
     return ""
 
 
-def extract_products(payload: dict[str, Any], page_number: int) -> list[dict[str, Any]]:
+def extract_products(payload: dict[str, Any] | str, page_number: int) -> list[dict[str, Any]]:
     """Locate a Tmall product list and normalize the common fields."""
+    if isinstance(payload, str):
+        return _extract_products_from_html(payload, page_number)
     candidates = (
         ("itemList",),
         ("data", "itemList"),
@@ -150,6 +160,75 @@ def extract_products(payload: dict[str, Any], page_number: int) -> list[dict[str
                 "raw_item": raw_item,
             }
         )
+    return products
+
+
+def _clean_html(value: str) -> str:
+    return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", value)).strip()
+
+
+def _html_attribute(tag: str, name: str) -> str:
+    match = re.search(
+        rf"\b{re.escape(name)}\s*=\s*(['\"])(.*?)\1",
+        tag,
+        re.IGNORECASE | re.DOTALL,
+    )
+    return match.group(2).strip() if match else ""
+
+
+def _extract_products_from_html(html: str, page_number: int) -> list[dict[str, Any]]:
+    """Parse legacy Tmall asynchronous-search HTML rows without dependencies."""
+    row_pattern = re.compile(
+        r'<dl\b[^>]*\bdata-id\s*=\s*(["\'])(?P<item_id>[^"\']+)\1[^>]*>(?P<body>.*?)</dl>',
+        re.IGNORECASE | re.DOTALL,
+    )
+    products: list[dict[str, Any]] = []
+    for match in row_pattern.finditer(html):
+        item_id = match.group("item_id").strip()
+        body = match.group("body")
+        link_match = re.search(
+            r'<a\b[^>]*\bhref\s*=\s*(["\'])(?P<href>.*?)\1',
+            body,
+            re.IGNORECASE | re.DOTALL,
+        )
+        image_match = re.search(r'<img\b(?P<tag>[^>]*)>', body, re.IGNORECASE | re.DOTALL)
+        title_match = re.search(
+            r'<div\b[^>]*\bclass\s*=\s*(["\'])[^"\']*\bdetail\b[^"\']*\1[^>]*>(?P<title>.*?)</div>',
+            body,
+            re.IGNORECASE | re.DOTALL,
+        )
+        price_match = re.search(
+            r'<(?:span|em)\b[^>]*\bclass\s*=\s*(["\'])[^"\']*\bc-price\b[^"\']*\1[^>]*>(?P<price>.*?)</(?:span|em)>',
+            body,
+            re.IGNORECASE | re.DOTALL,
+        )
+        sales_match = re.search(
+            r'<(?:span|div)\b[^>]*\bclass\s*=\s*(["\'])[^"\']*\bsale-num\b[^"\']*\1[^>]*>(?P<sales>.*?)</(?:span|div)>',
+            body,
+            re.IGNORECASE | re.DOTALL,
+        )
+        href = link_match.group("href").strip() if link_match else ""
+        if href.startswith("//"):
+            href = "https:" + href
+        image_tag = image_match.group("tag") if image_match else ""
+        image_url = _html_attribute(image_tag, "data-ks-lazyload") or _html_attribute(image_tag, "src")
+        if image_url.startswith("//"):
+            image_url = "https:" + image_url
+        products.append(
+            {
+                "item_id": item_id,
+                "title": _clean_html(title_match.group("title")) if title_match else "",
+                "price": _clean_html(price_match.group("price")) if price_match else "",
+                "original_price": "",
+                "item_url": href,
+                "image_url": image_url,
+                "sales": _clean_html(sales_match.group("sales")) if sales_match else "",
+                "page_number": page_number,
+                "raw_item": {"html": match.group(0)},
+            }
+        )
+    if not products:
+        raise ValueError("response HTML does not contain a product list")
     return products
 
 
@@ -281,6 +360,37 @@ class CrawlValidationError(ValueError):
 class CrawlResult:
     page_item_counts: dict[int, int]
     total_items: int
+    skipped_duplicates: int = 0
+    stop_reason: str = "page_limit"
+
+
+def has_next_page(payload: dict[str, Any] | str) -> bool:
+    """Return whether legacy Tmall async HTML enables a next-page link."""
+    if not isinstance(payload, str):
+        return True
+    compact = " ".join(payload.split())
+    page_count = re.search(
+        r'<b\b[^>]*\bclass\s*=\s*(["\'])[^"\']*\bui-page-s-len\b[^"\']*\1[^>]*>\s*(\d+)\s*/\s*(\d+)\s*</b>',
+        compact,
+        re.IGNORECASE,
+    )
+    if page_count:
+        return int(page_count.group(2)) < int(page_count.group(3))
+    pagination = re.search(
+        r'<div\b[^>]*\bclass\s*=\s*(["\'])[^"\']*\bpagination\b[^"\']*\1[^>]*>(?P<body>.*?)</div>',
+        compact,
+        re.IGNORECASE,
+    )
+    if not pagination:
+        return True
+    next_link = re.search(
+        r'<a\b(?P<tag>[^>]*)>\s*下一页\s*</a>',
+        pagination.group("body"),
+        re.IGNORECASE | re.DOTALL,
+    )
+    if not next_link:
+        return True
+    return "disable" not in _html_attribute(next_link.group("tag"), "class").split()
 
 
 def crawl_pages(
@@ -303,26 +413,93 @@ def crawl_pages(
         items = extract_products(payload, page_number)
         if not items:
             raise CrawlValidationError(f"page {page_number} is empty")
+        page_item_ids: set[str] = set()
+        unique_items: list[dict[str, Any]] = []
         for item in items:
             item_id = item["item_id"]
+            if item_id in page_item_ids:
+                continue
             if item_id in seen_item_pages:
                 raise CrawlValidationError(
                     f"product ID {item_id} appears on pages "
                     f"{seen_item_pages[item_id]} and {page_number}"
                 )
             seen_item_pages[item_id] = page_number
-        store.save_page(shop_url, page_number, payload, items)
-        page_item_counts[page_number] = len(items)
+            page_item_ids.add(item_id)
+            unique_items.append(item)
+        store.save_page(shop_url, page_number, payload, unique_items)
+        page_item_counts[page_number] = len(unique_items)
     return CrawlResult(page_item_counts=page_item_counts, total_items=len(seen_item_pages))
+
+
+def crawl_until_end(
+    shop_url: str,
+    start_page: int,
+    fetcher: Any,
+    store: TmallShopStore,
+) -> CrawlResult:
+    """Save unique products until Tmall disables pagination or returns no items."""
+    if start_page <= 0:
+        raise CrawlValidationError("start_page must be positive")
+
+    page_item_counts: dict[int, int] = {}
+    seen_item_ids: set[str] = set()
+    skipped_duplicates = 0
+    page_number = start_page
+    while True:
+        payload = fetcher(page_number)
+        try:
+            items = extract_products(payload, page_number)
+        except ValueError as exc:
+            if "does not contain a product list" in str(exc):
+                return CrawlResult(
+                    page_item_counts,
+                    len(seen_item_ids),
+                    skipped_duplicates,
+                    "empty_page",
+                )
+            raise
+        if not items:
+            return CrawlResult(
+                page_item_counts, len(seen_item_ids), skipped_duplicates, "empty_page"
+            )
+
+        page_item_ids: set[str] = set()
+        unique_items: list[dict[str, Any]] = []
+        for item in items:
+            item_id = item["item_id"]
+            if item_id in page_item_ids:
+                continue
+            page_item_ids.add(item_id)
+            if item_id in seen_item_ids:
+                skipped_duplicates += 1
+                continue
+            seen_item_ids.add(item_id)
+            unique_items.append(item)
+        if unique_items:
+            store.save_page(shop_url, page_number, payload, unique_items)
+            page_item_counts[page_number] = len(unique_items)
+        if not has_next_page(payload):
+            return CrawlResult(
+                page_item_counts,
+                len(seen_item_ids),
+                skipped_duplicates,
+                "no_next_page",
+            )
+        page_number += 1
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Crawl a selected Tmall shop product-list page range into SQLite."
+        description="Crawl Tmall shop product-list pages into SQLite."
     )
     parser.add_argument("--shop-url", required=True, help="Tmall shop search URL.")
     parser.add_argument("--start-page", required=True, type=int, help="First page number.")
-    parser.add_argument("--pages", required=True, type=int, help="Number of pages to crawl.")
+    parser.add_argument(
+        "--pages",
+        type=int,
+        help="Optional number of pages to crawl; omit to continue until no next page.",
+    )
     parser.add_argument("--db", default="data/taobao_shop_items.sqlite3", help="SQLite output path.")
     parser.add_argument("--timeout", type=float, default=30.0, help="HTTP timeout in seconds.")
     return parser.parse_args(argv)
@@ -335,7 +512,7 @@ def config_from_args(args: argparse.Namespace) -> CrawlerConfig:
     cookies = parse_cookie_header(cookie_header)
     if not cookies:
         raise ValueError("TAOBAO_COOKIE does not contain any valid cookies")
-    if args.start_page <= 0 or args.pages <= 0:
+    if args.start_page <= 0 or (args.pages is not None and args.pages <= 0):
         raise ValueError("--start-page and --pages must be positive")
     return CrawlerConfig(
         shop_url=args.shop_url,
@@ -383,13 +560,19 @@ def main(argv: list[str] | None = None) -> int:
         session = build_session()
         store = TmallShopStore(config.db_path)
         try:
-            result = crawl_pages(
-                config.shop_url,
-                config.start_page,
-                config.pages,
-                lambda page_number: fetch_page(config, page_number, session),
-                store,
-            )
+            fetcher = lambda page_number: fetch_page(config, page_number, session)
+            if config.pages is None:
+                result = crawl_until_end(
+                    config.shop_url, config.start_page, fetcher, store
+                )
+            else:
+                result = crawl_pages(
+                    config.shop_url,
+                    config.start_page,
+                    config.pages,
+                    fetcher,
+                    store,
+                )
         finally:
             store.close()
     except (CrawlValidationError, OSError, ValueError) as exc:
@@ -397,7 +580,11 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     for page_number, item_count in result.page_item_counts.items():
         print(f"page={page_number} items={item_count}")
-    print(f"Crawl finished: pages={len(result.page_item_counts)} items={result.total_items}")
+    print(
+        "Crawl finished: "
+        f"pages={len(result.page_item_counts)} items={result.total_items} "
+        f"skipped_duplicates={result.skipped_duplicates} stop_reason={result.stop_reason}"
+    )
     return 0
 
 

@@ -50,6 +50,34 @@ class TmallRequestAndParserTests(unittest.TestCase):
         self.assertEqual(items[0]["title"], "Test item")
         self.assertEqual(items[0]["page_number"], 1)
 
+    def test_decode_jsonp_unwraps_an_html_string_payload(self):
+        self.assertEqual(
+            tmall_shop_crawler.decode_payload('jsonp91("<dl data-id=\\\"1001\\\"></dl>")'),
+            "<dl data-id=\"1001\"></dl>",
+        )
+
+    def test_decode_jsonp_accepts_control_characters_in_html_strings(self):
+        self.assertEqual(
+            tmall_shop_crawler.decode_payload('jsonp91("<dl>first\nsecond</dl>")'),
+            "<dl>first\nsecond</dl>",
+        )
+
+    def test_extract_products_from_tmall_html_item_rows(self):
+        html = '''
+        <dl class="item" data-id="1001">
+          <a class="J_TGoldData" href="//detail.tmall.com/item.htm?id=1001"></a>
+          <img data-ks-lazyload="//img.example/1001.jpg" alt="Test item" />
+          <div class="detail"><a>Test item</a></div>
+          <span class="c-price">9.90</span>
+          <span class="sale-num">100 people paid</span>
+        </dl>
+        '''
+        items = tmall_shop_crawler.extract_products(html, 1)
+        self.assertEqual(items[0]["item_id"], "1001")
+        self.assertEqual(items[0]["title"], "Test item")
+        self.assertEqual(items[0]["price"], "9.90")
+        self.assertEqual(items[0]["item_url"], "https://detail.tmall.com/item.htm?id=1001")
+
     def test_store_page_upserts_items_and_raw_page(self):
         with tempfile.TemporaryDirectory() as directory:
             store = tmall_shop_crawler.TmallShopStore(Path(directory) / "shop.sqlite3")
@@ -98,35 +126,87 @@ class TmallRequestAndParserTests(unittest.TestCase):
             finally:
                 store.close()
 
-    def test_crawl_pages_rejects_an_empty_requested_page(self):
+    def test_crawl_until_end_stops_when_a_page_is_empty(self):
         with tempfile.TemporaryDirectory() as directory:
             store = tmall_shop_crawler.TmallShopStore(Path(directory) / "shop.sqlite3")
             try:
                 def fake_fetcher(page_number):
                     return {"itemList": [{"item_id": "1"}]} if page_number == 1 else {"itemList": []}
 
-                with self.assertRaisesRegex(
-                    tmall_shop_crawler.CrawlValidationError, "page 2 is empty"
-                ):
-                    tmall_shop_crawler.crawl_pages(
-                        "https://iqoo.tmall.com/search.htm", 1, 2, fake_fetcher, store
-                    )
+                result = tmall_shop_crawler.crawl_until_end(
+                    "https://iqoo.tmall.com/search.htm", 1, fake_fetcher, store
+                )
+                self.assertEqual(result.page_item_counts, {1: 1})
+                self.assertEqual(result.total_items, 1)
+                self.assertEqual(result.skipped_duplicates, 0)
+                self.assertEqual(result.stop_reason, "empty_page")
             finally:
                 store.close()
 
-    def test_crawl_pages_rejects_a_product_id_repeated_across_pages(self):
+    def test_crawl_until_end_skips_a_product_id_repeated_across_pages(self):
         with tempfile.TemporaryDirectory() as directory:
             store = tmall_shop_crawler.TmallShopStore(Path(directory) / "shop.sqlite3")
             try:
                 def fake_fetcher(page_number):
-                    return {"itemList": [{"item_id": "repeated"}]}
+                    if page_number == 1:
+                        return {"itemList": [{"item_id": "repeated"}, {"item_id": "one"}]}
+                    if page_number == 2:
+                        return {"itemList": [{"item_id": "repeated"}, {"item_id": "two"}]}
+                    return {"itemList": []}
 
-                with self.assertRaisesRegex(
-                    tmall_shop_crawler.CrawlValidationError, "repeated"
-                ):
-                    tmall_shop_crawler.crawl_pages(
-                        "https://iqoo.tmall.com/search.htm", 1, 2, fake_fetcher, store
-                    )
+                result = tmall_shop_crawler.crawl_until_end(
+                    "https://iqoo.tmall.com/search.htm", 1, fake_fetcher, store
+                )
+                self.assertEqual(result.page_item_counts, {1: 2, 2: 1})
+                self.assertEqual(result.total_items, 3)
+                self.assertEqual(result.skipped_duplicates, 1)
+                self.assertEqual(store.count_items(), 3)
+            finally:
+                store.close()
+
+    def test_has_next_page_recognizes_disabled_next_link(self):
+        self.assertFalse(
+            tmall_shop_crawler.has_next_page(
+                '<div class="pagination"><a class="disable">下一页</a></div>'
+            )
+        )
+        self.assertTrue(
+            tmall_shop_crawler.has_next_page(
+                '<div class="pagination"><a class="next" href="?pageNo=2">下一页</a></div>'
+            )
+        )
+
+    def test_has_next_page_reads_legacy_page_counter(self):
+        self.assertFalse(
+            tmall_shop_crawler.has_next_page(
+                '<p><b class="ui-page-s-len">1/1</b><b title="下一页" class="ui-page-s-next">&gt;</b></p>'
+            )
+        )
+        self.assertTrue(
+            tmall_shop_crawler.has_next_page(
+                '<p><b class="ui-page-s-len">1/3</b><b title="下一页" class="ui-page-s-next">&gt;</b></p>'
+            )
+        )
+
+    def test_crawl_pages_deduplicates_repeated_rendering_of_one_page_item(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = tmall_shop_crawler.TmallShopStore(Path(directory) / "shop.sqlite3")
+            try:
+                result = tmall_shop_crawler.crawl_pages(
+                    "https://iqoo.tmall.com/search.htm",
+                    1,
+                    1,
+                    lambda page_number: {
+                        "itemList": [
+                            {"item_id": "duplicated", "title": "first"},
+                            {"item_id": "duplicated", "title": "second"},
+                        ]
+                    },
+                    store,
+                )
+                self.assertEqual(result.page_item_counts, {1: 1})
+                self.assertEqual(result.total_items, 1)
+                self.assertEqual(store.count_items(), 1)
             finally:
                 store.close()
 
@@ -137,8 +217,6 @@ class TmallRequestAndParserTests(unittest.TestCase):
                 "https://iqoo.tmall.com/search.htm",
                 "--start-page",
                 "1",
-                "--pages",
-                "2",
             ]
         )
         with mock.patch.dict(os.environ, {}, clear=True):
@@ -147,11 +225,12 @@ class TmallRequestAndParserTests(unittest.TestCase):
         with mock.patch.dict(os.environ, {"TAOBAO_COOKIE": "a=1; b=2"}, clear=True):
             config = tmall_shop_crawler.config_from_args(args)
         self.assertEqual(config.cookies, {"a": "1", "b": "2"})
-        self.assertEqual(config.pages, 2)
+        self.assertIsNone(config.pages)
 
     def test_fetch_page_uses_proxy_free_session_cookies_timeout_and_jsonp(self):
         class FakeResponse:
-            text = 'tmallShopCallback({"itemList":[{"item_id":"1"}]});'
+            text = 'jsonp91({"itemList":[{"item_id":"1"}]});'
+            url = "https://iqoo.tmall.com/i/asynSearch.htm"
 
             def raise_for_status(self):
                 return None
@@ -179,6 +258,31 @@ class TmallRequestAndParserTests(unittest.TestCase):
         self.assertEqual(session.request[1]["cookies"], {"a": "1"})
         self.assertEqual(session.request[1]["timeout"], 12)
         self.assertEqual(payload["itemList"][0]["item_id"], "1")
+
+    def test_fetch_page_rejects_a_redirected_error_page(self):
+        class FakeResponse:
+            text = "<html>not found</html>"
+            url = "https://err.tmall.com/error"
+
+            def raise_for_status(self):
+                return None
+
+        class FakeSession:
+            trust_env = True
+
+            def get(self, url, **kwargs):
+                return FakeResponse()
+
+        config = tmall_shop_crawler.CrawlerConfig(
+            shop_url="https://iqoo.tmall.com/search.htm",
+            start_page=1,
+            pages=1,
+            db_path=Path("data/test.sqlite3"),
+            timeout=12,
+            cookies={"a": "1"},
+        )
+        with self.assertRaisesRegex(ValueError, "neither JSON nor JSONP"):
+            tmall_shop_crawler.fetch_page(config, 1, FakeSession())
 
     def test_main_returns_one_when_cookie_is_missing(self):
         with mock.patch.dict(os.environ, {}, clear=True):

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import random
 import re
 import sqlite3
@@ -25,14 +26,14 @@ import requests
 
 try:
     from src.tests.taobao_test import cookies as DEFAULT_COOKIES
-except ModuleNotFoundError:  # Allows: python src/tests/taobao_batch.py
-    from taobao_test import cookies as DEFAULT_COOKIES
+except ModuleNotFoundError:  # Allows: python src/taobao_batch.py
+    from tests.taobao_test import cookies as DEFAULT_COOKIES
 
 DEFAULT_DB = Path("data/taobao_items.sqlite3")
 DEFAULT_OUTPUT_DIR = Path("data/taobao_html")
 DEFAULT_ADDRESS_ID = "22802236364"
-DEFAULT_DELAY_MIN = 2.0
-DEFAULT_DELAY_MAX = 5.0
+DEFAULT_DELAY_MIN = 8.0
+DEFAULT_DELAY_MAX = 15.0
 
 DEFAULT_HEADERS = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
@@ -84,9 +85,27 @@ def build_item_url(item_id: str, address_id: str | None = DEFAULT_ADDRESS_ID) ->
     return "https://detail.tmall.com/item.htm?" + params
 
 
+def cookies_from_environment() -> dict[str, str]:
+    """Use a caller-supplied browser cookie without persisting it in source."""
+    cookie_header = os.environ.get('TAOBAO_COOKIE', '').strip()
+    if not cookie_header:
+        return DEFAULT_COOKIES
+    cookies: dict[str, str] = {}
+    for segment in cookie_header.split(';'):
+        name, separator, value = segment.strip().partition('=')
+        if separator and name:
+            cookies[name] = value
+    return cookies or DEFAULT_COOKIES
+
+
 def fetch_item_html(session: requests.Session, item_id: str, address_id: str | None, timeout: int) -> tuple[int, str, str]:
     url = build_item_url(item_id, address_id)
-    response = session.get(url, headers=DEFAULT_HEADERS, cookies=DEFAULT_COOKIES, timeout=timeout)
+    response = session.get(
+        url,
+        headers=DEFAULT_HEADERS,
+        cookies=cookies_from_environment(),
+        timeout=timeout,
+    )
     return response.status_code, response.url, response.text
 
 
@@ -265,6 +284,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument('positional_ids', nargs='*', help='Item IDs separated by whitespace.')
     parser.add_argument('--ids', action='append', default=[], help='Comma/whitespace separated item IDs.')
     parser.add_argument('--ids-file', action='append', default=[], help='Text file containing item IDs.')
+    parser.add_argument('--shop-db', help='SQLite database containing tmall_shop_items.')
+    parser.add_argument('--shop-url', help='Shop URL used to select IDs from --shop-db.')
     parser.add_argument('--db', default=str(DEFAULT_DB), help='SQLite output path.')
     parser.add_argument('--output-dir', default=str(DEFAULT_OUTPUT_DIR), help='Directory for per-item raw HTML files.')
     parser.add_argument('--address-id', default=DEFAULT_ADDRESS_ID, help='Tmall addressId query parameter.')
@@ -281,7 +302,27 @@ def load_ids(args: argparse.Namespace) -> list[str]:
     values.extend(args.ids)
     for file_name in args.ids_file:
         values.append(Path(file_name).read_text(encoding='utf-8'))
+    if args.shop_db:
+        values.extend(load_shop_item_ids(args.shop_db, args.shop_url))
     return parse_item_ids(values)
+
+
+def load_shop_item_ids(db_path: str | Path, shop_url: str | None = None) -> list[str]:
+    """Read product IDs from the Tmall shop crawler's SQLite output."""
+    connection = sqlite3.connect(db_path)
+    try:
+        if shop_url:
+            rows = connection.execute(
+                'SELECT item_id FROM tmall_shop_items WHERE shop_url = ? ORDER BY item_id',
+                (shop_url,),
+            ).fetchall()
+        else:
+            rows = connection.execute(
+                'SELECT item_id FROM tmall_shop_items ORDER BY item_id'
+            ).fetchall()
+    finally:
+        connection.close()
+    return [str(row[0]) for row in rows]
 
 
 def random_delay(min_seconds: float, max_seconds: float) -> float:
@@ -295,8 +336,9 @@ def crawl_batch(args: argparse.Namespace) -> int:
     if not item_ids:
         print('ERROR: no item IDs provided', file=sys.stderr)
         return 1
-    output_dir = Path(args.output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
+    output_dir = Path(args.output_dir) if args.output_dir else None
+    if output_dir:
+        output_dir.mkdir(parents=True, exist_ok=True)
     store = TaobaoSQLiteStore(args.db)
     session = build_session()
     fetched = skipped = failed = 0
@@ -311,8 +353,9 @@ def crawl_batch(args: argparse.Namespace) -> int:
             raw_html = ''
             try:
                 http_status, final_url, raw_html = fetch_item_html(session, item_id, args.address_id, args.timeout)
-                html_path = output_dir / f'{item_id}.html'
-                html_path.write_text(raw_html, encoding='utf-8')
+                if output_dir:
+                    html_path = output_dir / f'{item_id}.html'
+                    html_path.write_text(raw_html, encoding='utf-8')
                 if http_status != 200:
                     raise RuntimeError(f'http status {http_status}')
                 block_error = detect_block_or_noitem_error(raw_html, item_id)
@@ -327,6 +370,7 @@ def crawl_batch(args: argparse.Namespace) -> int:
                 failed += 1
                 store.mark_error(item_id, None, str(exc), url, raw_html)
                 print(f'  ERROR {item_id}: {exc}', file=sys.stderr)
+                break
             if index < len(item_ids) and (args.delay_min > 0 or args.delay_max > 0):
                 wait = random_delay(args.delay_min, args.delay_max)
                 print(f'  wait {wait:.1f}s')

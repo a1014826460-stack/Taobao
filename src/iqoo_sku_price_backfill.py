@@ -269,6 +269,18 @@ PHONE_EXPORT_HEADERS = [
     "免息分期",
 ]
 
+ITEM_GET_PHONE_EXPORT_HEADERS = [
+    "店铺",
+    "网页版链接",
+    "品牌(*)",
+    "机型(*)",
+    "配置(*)",
+    "颜色(*)",
+    "原价",
+    "优惠价(券后价)",
+    "免息分期",
+]
+
 
 def phone_model_from_title(title: str) -> str | None:
     match = re.search(
@@ -350,13 +362,18 @@ def build_phone_export_rows(details: list[dict[str, Any]], shop_url: str) -> lis
     return [entry[1] for entry in rows_by_identity.values()]
 
 
-def write_phone_export(output_path: str | Path, rows: list[dict[str, str]]) -> int:
+def write_phone_export(
+    output_path: str | Path,
+    rows: list[dict[str, str]],
+    headers: list[str] | None = None,
+) -> int:
+    headers = headers or PHONE_EXPORT_HEADERS
     book = openpyxl.Workbook()
     sheet = book.active
     sheet.title = "iQOO手机SKU"
-    sheet.append(PHONE_EXPORT_HEADERS)
+    sheet.append(headers)
     for row in rows:
-        sheet.append([row.get(header, "") for header in PHONE_EXPORT_HEADERS])
+        sheet.append([row.get(header, "") for header in headers])
     sheet.freeze_panes = "A2"
     for column in sheet.columns:
         letter = column[0].column_letter
@@ -366,6 +383,79 @@ def write_phone_export(output_path: str | Path, rows: list[dict[str, str]]) -> i
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     book.save(output_path)
     return len(rows)
+
+
+def _item_get_sku_values(properties_name: object) -> tuple[str, str]:
+    configuration = color = ""
+    for part in str(properties_name or "").split(";"):
+        fields = part.split(":")
+        if len(fields) < 2:
+            continue
+        property_name, value_name = fields[-2:]
+        if "颜色" in property_name:
+            color = value_name
+        elif any(token in property_name for token in ("容量", "内存", "存储")):
+            configuration = value_name
+    return configuration, color
+
+
+def _null(value: object) -> str:
+    return str(value) if value not in (None, "") else "NULL"
+
+
+def build_item_get_phone_export_rows(records: list[dict[str, Any]]) -> list[dict[str, str]]:
+    """Convert item_get records to one export row per real SKU."""
+    rows: list[dict[str, str]] = []
+    seen_identities: set[tuple[str, str, str, str]] = set()
+    for record in records:
+        model = phone_model_from_title(str(record.get("title") or ""))
+        if not model:
+            continue
+        for sku in ((record.get("skus") or {}).get("sku") or []):
+            if not isinstance(sku, dict):
+                continue
+            configuration, color = _item_get_sku_values(sku.get("properties_name"))
+            normalized_configuration = re.sub(
+                r"^(\d+)GB\+", r"\1+", normalize_text(configuration).upper()
+            ).replace("GB", "G").replace("TB", "T")
+            identity = (_null(record.get("brand")), model, _null(normalized_configuration), _null(color))
+            if identity in seen_identities:
+                continue
+            seen_identities.add(identity)
+            rows.append(
+                {
+                    "店铺": _null(record.get("nick")),
+                    "网页版链接": _null(record.get("detail_url")),
+                    "品牌(*)": identity[0],
+                    "机型(*)": identity[1],
+                    "配置(*)": identity[2],
+                    "颜色(*)": identity[3],
+                    "原价": _null(sku.get("orginal_price")),
+                    "优惠价(券后价)": _null(sku.get("price")),
+                    "免息分期": "NULL",
+                }
+            )
+    return rows
+
+
+def load_item_get_records(db_path: str | Path) -> list[dict[str, Any]]:
+    connection = sqlite3.connect(db_path)
+    connection.row_factory = sqlite3.Row
+    try:
+        rows = connection.execute(
+            "SELECT num_iid, raw_json FROM item_details ORDER BY num_iid"
+        ).fetchall()
+    finally:
+        connection.close()
+    records: list[dict[str, Any]] = []
+    for row in rows:
+        try:
+            item = (json.loads(row["raw_json"]).get("item") or {})
+            if isinstance(item, dict):
+                records.append(item)
+        except (TypeError, ValueError):
+            continue
+    return records
 
 
 def phone_detail_coverage(details: list[dict[str, Any]]) -> tuple[int, int, set[str]]:
@@ -543,6 +633,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--shop-url", default=DEFAULT_SHOP_URL)
     parser.add_argument("--no-crawl", action="store_true", help="Do not supplement missing local details.")
     parser.add_argument("--phone-export", help="Write all captured iQOO phone SKUs to this XLSX path.")
+    parser.add_argument(
+        "--item-get-phone-export",
+        help="Write iQOO phone SKUs from item_get SQLite records to this XLSX path.",
+    )
     return parser.parse_args(argv)
 
 
@@ -556,6 +650,13 @@ def workbook_models(source_path: str | Path) -> list[str]:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+    if args.item_get_phone_export:
+        rows = build_item_get_phone_export_rows(load_item_get_records(args.detail_db))
+        written = write_phone_export(
+            args.item_get_phone_export, rows, ITEM_GET_PHONE_EXPORT_HEADERS
+        )
+        print(f"item_get phone SKU export rows={written}")
+        return 0
     if args.phone_export:
         rows = build_phone_export_rows(load_detail_records(args.detail_db), args.shop_url)
         written = write_phone_export(args.phone_export, rows)

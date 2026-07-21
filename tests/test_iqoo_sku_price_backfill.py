@@ -229,6 +229,70 @@ class IqooSkuPriceBackfillTests(unittest.TestCase):
             finally:
                 workbook.close()
 
+    def test_build_item_get_phone_export_rows_uses_sku_price_and_null_fallbacks(self):
+        records = [
+            {
+                "num_iid": "1001",
+                "title": "vivo iQOO Z11 Turbo 手机",
+                "nick": "iQOO手机官方旗舰店",
+                "detail_url": "https://item.taobao.com/item.htm?id=1001",
+                "brand": "vivo",
+                "skus": {
+                    "sku": [
+                        {
+                            "price": 2699,
+                            "orginal_price": 2799,
+                            "properties_name": "机身颜色:天光白;储存容量:12GB+256GB",
+                        },
+                        {
+                            "price": None,
+                            "properties_name": "机身颜色:极夜黑;储存容量:16GB+512GB",
+                        },
+                    ]
+                },
+            }
+        ]
+
+        rows = backfill.build_item_get_phone_export_rows(records)
+
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0]["店铺"], "iQOO手机官方旗舰店")
+        self.assertEqual(rows[0]["网页版链接"], "https://item.taobao.com/item.htm?id=1001")
+        self.assertEqual(rows[0]["品牌(*)"], "vivo")
+        self.assertEqual(rows[0]["机型(*)"], "iQOO Z11 Turbo")
+        self.assertEqual(rows[0]["配置(*)"], "12+256G")
+        self.assertEqual(rows[0]["颜色(*)"], "天光白")
+        self.assertEqual(rows[0]["原价"], "2799")
+        self.assertEqual(rows[0]["优惠价(券后价)"], "2699")
+        self.assertEqual(rows[0]["免息分期"], "NULL")
+        self.assertEqual(rows[1]["原价"], "NULL")
+        self.assertEqual(rows[1]["优惠价(券后价)"], "NULL")
+
+    def test_build_item_get_phone_export_rows_deduplicates_identical_phone_combinations(self):
+        record = {
+            "num_iid": "1001",
+            "title": "vivo iQOO Z11 Turbo 手机",
+            "nick": "iQOO手机官方旗舰店",
+            "detail_url": "https://item.taobao.com/item.htm?id=1001",
+            "brand": "vivo",
+            "skus": {
+                "sku": [
+                    {
+                        "price": 2699,
+                        "properties_name": "机身颜色:天光白;储存容量:12GB+256GB",
+                    },
+                    {
+                        "price": 2699,
+                        "properties_name": "机身颜色:天光白;储存容量:12GB+256GB",
+                    },
+                ]
+            },
+        }
+
+        rows = backfill.build_item_get_phone_export_rows([record, record])
+
+        self.assertEqual(len(rows), 1)
+
     def test_format_installment_and_load_shop_candidates(self):
         self.assertEqual(backfill.format_installment("2159", 12), "¥179.92 × 12期")
         self.assertEqual(backfill.format_installment("2159", None), "")

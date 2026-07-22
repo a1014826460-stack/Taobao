@@ -15,6 +15,7 @@ password.env
 data/*.sqlite3
 data/*.sqlite3-*
 data/
+*.db
 *.log
 .xlsx
 .csv
@@ -32,3 +33,4 @@ node_modules/
 .env.*
 !.env.example
 frontend/dist/
+*.tsbuildinfo

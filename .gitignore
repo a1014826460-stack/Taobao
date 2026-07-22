@@ -24,3 +24,11 @@ data/
 .idea/
 .DS_Store
 Thumbs.db
+
+# JavaScript dependencies and local service configuration
+node_modules/
+.playwright-mcp/
+.env
+.env.*
+!.env.example
+frontend/dist/

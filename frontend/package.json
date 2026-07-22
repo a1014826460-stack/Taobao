@@ -1,0 +1,26 @@
+{
+  "name": "crawler-api-portal",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "i18next": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "react-i18next": "latest",
+    "react-router-dom": "latest",
+    "@tanstack/react-query": "latest"
+  },
+  "devDependencies": {
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "typescript": "latest",
+    "vite": "latest",
+    "vitest": "latest"
+  }
+}

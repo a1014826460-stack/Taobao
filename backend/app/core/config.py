@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     admin_email: str = "admin@example.com"
     admin_password: str = "change-me-now"
     cors_origins: str = "http://localhost:5173"
+    trial_rate_limit: int = 10
+    formal_rate_limit: int = 60
 
 
 @lru_cache

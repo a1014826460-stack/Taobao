@@ -22,3 +22,10 @@ class UserResponse(BaseModel):
     is_formal: bool
 
     model_config = {"from_attributes": True}
+
+
+class AdminUserUpdate(BaseModel):
+    is_active: bool | None = None
+    is_admin: bool | None = None
+    is_formal: bool | None = None
+    trial_successes_remaining: int | None = Field(default=None, ge=0)

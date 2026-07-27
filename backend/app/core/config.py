@@ -12,10 +12,13 @@ class Settings(BaseSettings):
     jwt_secret: str = "development-only-change-me-with-at-least-32-bytes"
     credential_encryption_key: str = "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="
     admin_email: str = "admin@example.com"
+    admin_username: str = "admin"
     admin_password: str = "change-me-now"
     cors_origins: str = "http://localhost:5173"
     trial_rate_limit: int = 10
     formal_rate_limit: int = 60
+    fanb_api_key: str = ""
+    fanb_api_secret: str = ""
 
 
 @lru_cache

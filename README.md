@@ -4,7 +4,10 @@ Multi-user APIs for Taobao, Tmall, and JD crawler services.
 
 ## Start
 
-1. Copy `.env.example` to `.env` and replace every secret.
+1. Copy `.env.example` to `.env` and replace every secret. Generate a real
+   `CREDENTIAL_ENCRYPTION_KEY` with the command in that file; it must be a
+   URL-safe base64-encoded 32-byte key. `FANB_API_KEY` and `FANB_API_SECRET`
+   are required only for the Taobao/JD data-gateway APIs.
 2. Run `docker compose up --build`.
 3. Open the portal at `http://localhost:8080`, Swagger at `http://localhost:8000/docs`, and ReDoc at `http://localhost:8000/redoc`.
 
@@ -28,3 +31,67 @@ New accounts have five successful-job trials. Trial requests are limited to
 
 Run Python checks with `python -m pytest -q`; build the portal with
 `npm --prefix frontend run build`.
+
+## Taobao Keyword Search
+
+Set `FANB_API_KEY` and `FANB_API_SECRET` in `.env` (or the process
+environment), then crawl a keyword with the Fan-B `item_search` gateway:
+
+```powershell
+python -m src.taobao.direct.search `
+  --q '润滑液' `
+  --max-pages 10 `
+  --workers 4
+```
+
+The crawler requests pages 1 through `--max-pages` concurrently, defaults to
+`--sort _sale` (sales order), and saves raw response pages plus normalized
+search items to `data/taobao_search.sqlite3`. Re-running skips successful
+pages for the same query and filters; use `--reset` to fetch them again.
+Use `python -m src.taobao.direct.search --help` for price and gateway filter
+arguments.
+
+Upload all stored main images to the Guonei collection endpoint with:
+
+```powershell
+python -m src.tools.upload_taobao_search_to_guonei
+```
+
+The uploader sends JSON batches containing the documented `淘宝` platform,
+`首图` image type, the stored keyword/page/link/title/main image/raw search
+item, and maps only `_sale` to `销量`; all other sorts map to `综合`.
+
+## Taobao Search Item Details
+
+After saving comprehensive-sort (`sort` empty) search pages, crawl the detail data
+for unique商品 IDs through Fan-B `item_get`:
+
+```powershell
+python -m src.taobao.direct.item `
+  --from-search-db data/taobao_search.sqlite3 `
+  --search-sort '' `
+  --per-keyword-limit 200 `
+  --item-api item_get `
+  --workers 8 `
+  --db data/taobao_item_get.sqlite3
+```
+
+The command deduplicates商品 ID within each keyword, caps each keyword at
+`--per-keyword-limit` IDs, runs concurrent requests, and stores raw detail JSON,
+normalized fields, success/error state, and the originating keyword/page in
+SQLite. Re-running skips successful商品 IDs unless `--reset` is supplied.
+
+## JD Keyword Search
+
+Set `FANB_API_KEY` and `FANB_API_SECRET` in `.env` (or `KEY` / `SECRET`), then crawl JD search pages through Fan-B `jd/item_search`:
+
+```powershell
+python -m src.jd.direct.search `
+  --q '手机' `
+  --sort _sale `
+  --max-pages 10 `
+  --workers 4
+```
+
+Supported JD `sort` values are `bid`, `_bid`, `_sale`, `_review`, and `_new`.
+`bid` means total price, `sale` means sales, `review` means review count, and `new` means new products; adding the `_` prefix means descending order. Results are stored in `data/jd_search.sqlite3` with raw pages, normalized items, and resumable page state.

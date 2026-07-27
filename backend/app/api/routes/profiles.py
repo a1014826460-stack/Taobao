@@ -20,7 +20,12 @@ router = APIRouter(prefix="/api/v1/profiles", tags=["profiles"])
 
 
 def encrypted(value: str | None) -> str | None:
-    return encrypt_secret(value, get_settings().credential_encryption_key) if value else None
+    if not value:
+        return None
+    try:
+        return encrypt_secret(value, get_settings().credential_encryption_key)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="CREDENTIAL_ENCRYPTION_NOT_CONFIGURED") from exc
 
 
 @router.post("/credentials", response_model=CredentialProfileResponse, status_code=status.HTTP_201_CREATED)

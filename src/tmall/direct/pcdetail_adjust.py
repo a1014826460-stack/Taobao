@@ -63,7 +63,7 @@ def build_data(sku_id, timestamp):
     )
 
 
-def request_adjust(cookie, sku_id):
+def request_adjust(cookie, sku_id, proxy_url=None):
     token = cookie_value(cookie, "_m_h5_tk")
     if not token:
         raise RuntimeError("TMALL_COOKIE does not contain _m_h5_tk")
@@ -102,7 +102,8 @@ def request_adjust(cookie, sku_id):
             "Accept": "*/*",
         },
     )
-    with urllib.request.urlopen(request, timeout=30) as response:
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({"http": proxy_url, "https": proxy_url})) if proxy_url else None
+    with (opener.open(request, timeout=30) if opener else urllib.request.urlopen(request, timeout=30)) as response:
         return response.status, parse_jsonp(response.read().decode("utf-8", "replace")), params
 
 

@@ -6,8 +6,11 @@ class RegisterRequest(BaseModel):
     password: str = Field(min_length=10, max_length=256)
 
 
-class LoginRequest(RegisterRequest):
-    pass
+class LoginRequest(BaseModel):
+    # Login also accepts the configured administrator username (for example,
+    # `admin`) while registration remains email-only.
+    email: str = Field(min_length=1, max_length=320)
+    password: str = Field(min_length=10, max_length=256)
 
 
 class TokenResponse(BaseModel):

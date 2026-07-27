@@ -1,10 +1,12 @@
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
+from backend.app.core.config import get_settings
 from backend.app.db.base import Base
 from backend.app.models import ApiToken, CrawlJob, CredentialProfile, ProxyProfile, User  # noqa: F401
 
 config = context.config
+config.set_main_option("sqlalchemy.url", get_settings().database_url)
 target_metadata = Base.metadata
 
 

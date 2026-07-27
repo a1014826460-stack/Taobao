@@ -1,0 +1,20 @@
+Metadata-Version: 2.4
+Name: crawler-api-platform
+Version: 0.1.0
+Requires-Python: >=3.11
+Requires-Dist: alembic<2,>=1.13
+Requires-Dist: celery[redis]<6,>=5.4
+Requires-Dist: cryptography<49,>=43
+Requires-Dist: fastapi<1,>=0.115
+Requires-Dist: httpx[socks]<1,>=0.27
+Requires-Dist: passlib[bcrypt]<2,>=1.7
+Requires-Dist: psycopg[binary]<4,>=3.2
+Requires-Dist: pydantic-settings<3,>=2.6
+Requires-Dist: pyjwt<3,>=2.9
+Requires-Dist: redis<6,>=5.2
+Requires-Dist: sqlalchemy<3,>=2.0
+Requires-Dist: uvicorn[standard]<1,>=0.32
+Provides-Extra: dev
+Requires-Dist: pytest<9,>=8.3; extra == "dev"
+Requires-Dist: pytest-asyncio<1,>=0.24; extra == "dev"
+Requires-Dist: ruff<1,>=0.7; extra == "dev"

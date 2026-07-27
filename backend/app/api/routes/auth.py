@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from backend.app.core.config import get_settings
 from backend.app.core.security import create_access_token, hash_password, verify_password
 from backend.app.db.session import get_db
 from backend.app.models.user import User
@@ -25,7 +26,10 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)) -> User:
 
 @router.post("/login", response_model=TokenResponse)
 def login(payload: LoginRequest, db: Session = Depends(get_db)) -> TokenResponse:
-    user = db.scalar(select(User).where(User.email == payload.email.lower()))
+    identifier = payload.email.lower()
+    settings = get_settings()
+    email = settings.admin_email.lower() if identifier == settings.admin_username.lower() else identifier
+    user = db.scalar(select(User).where(User.email == email))
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="INVALID_CREDENTIALS")
     return TokenResponse(access_token=create_access_token(str(user.id)))

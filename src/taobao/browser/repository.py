@@ -79,12 +79,12 @@ CREATE TABLE IF NOT EXISTS seller_infos (platform TEXT NOT NULL, item_id TEXT NO
     def recover_running_tasks(self):
         cur=self.conn.execute("UPDATE crawl_tasks SET status='pending',account_id=NULL,updated_at=? WHERE status='running'",(_now(),)); return cur.rowcount
     def save_network_record(self,record):
-        r=dict(record); rid=r.get('record_id') or str(uuid.uuid4()); url=re.sub(r'([?&](?:token|sign))=[^&]*',r'\1=<redacted>',r.get('url') or '',flags=re.I)
+        r=dict(record); rid=r.get('record_id') or str(uuid.uuid4()); url=r.get('url'); url=re.sub(r'([?&](?:token|sign))=[^&]*',r'\1=<redacted>',url,flags=re.I) if url is not None else None
         h=r.get('response_headers',r.get('response_headers_json',{}));
         if isinstance(h,str):
             try: h=json.loads(h)
             except Exception: h={}
-        h={k:('<redacted>' if re.search(r'cookie|authorization|token|set-cookie',k,re.I) else v) for k,v in (h or {}).items()}
+        h={k:('<redacted>' if re.search(r'cookie|authorization|token|set-cookie',k,re.I) else v) for k,v in h.items()} if isinstance(h,dict) else None
         def scrub(v):
             if isinstance(v,dict): return {k:('<redacted>' if re.search(r'cookie|set.cookie|authorization|token|sign',k,re.I) else scrub(x)) for k,x in v.items()}
             if isinstance(v,list): return [scrub(x) for x in v]

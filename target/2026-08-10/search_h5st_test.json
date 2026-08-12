@@ -1,0 +1,22 @@
+{
+  "h5st": "20260731082525258;52e2n2p557beine2;f06cc;tk03waee71cc118n0XY7D3qpWow0Obr4wRoAAq7p2fZy4jPY4Ngs5izGWHVQucfqxZ1_e2mq0az9qTVlQH4xDkumUmLB;a36670e9f0d89a780a55742a96de2a5e7724d24dd9bcd4dfb80bf422f0d42730;5.3;1785457520258;of7ruCLj5XFQCWFT0XYe7iIQ5XFf2jpjxjpPFipjLDrg0XIf7jYe0Xoe2L4e6rJdJbEjLrJp-jZQqWXbB6XPqiGWJrJdJbYf2iFjLrJp-jYfLDIj9e1TJrpjh7JjJrJdJrEa-OFTGOEjLrJp-jJTGmISKWoeKalS7j4fzPYd6XVT0n1fyjVT7Toe1jVS3jpjxj5PKSEQKeFjLrJp-jpfJrJdJbYOJipjLDrgJbIg4zZe1uWS-GFSMWoRJrJdJTEjLrJp-jJW0DEN3jEXYinYJrJdJ31QHyVT5ipjLDrgJj4f9G1WJrJdJTlPJrpjh7ZMLrJp3rJdJnYf2iFjLrpjLDrg3nojxjpf6XETJrpjLrJp-rojxjpd2iFjLrpjLDrg7rJdJTYOJipjLrpjh-kjxjpS9WlOzWFjLrJp-3kjLDLjlWmXyOUQiyna-W3TMaFRJrJdJjoPJrpjLrJpwqJdJrkPJrpjh7Jj3ToNL-oe1zVRUq5d7zpf6rpWdq5P0ulS9G1WJrJdJnVO4ipjLD7N;cf13de300a65eb0f237abfe337a533299cfd0c350cecd2cb24d83b8310bf735c;of7rHGVO26pO-XlPyaGQCO1Q-6pS5u1OyW1R-bVZ9uVR3eFQ2Slg5KlOI6JQ8G1P5WFW3yVSC61T-bEQGGlQI6ZNHuFT-bVR7qUT",
+  "_stk": "appid,body,client,clientVersion,cthr,functionId,keyword,loginType,t,uuid",
+  "_ste": 1,
+  "params": {
+    "appid": "search-pc-java",
+    "functionId": "pc_search_searchWare",
+    "body": "{\"enc\":\"utf-8\",\"pvid\":\"bcd8e9b58b1e4b1fbf3092d226e060e1\",\"area\":\"19_1659_37264_37360\",\"page\":2,\"mode\":\"\",\"concise\":false,\"hoverPictures\":true,\"newAdvRepeat\":true,\"mixerParam\":true,\"new_interval\":true,\"s\":23}",
+    "client": "pc",
+    "clientVersion": "1.0.0",
+    "keyword": "穿戴跳蛋",
+    "uuid": "17854075363601606079882",
+    "loginType": "3",
+    "cthr": "1",
+    "t": 1785457520257,
+    "_stk": "appid,body,client,clientVersion,cthr,functionId,keyword,loginType,t,uuid",
+    "_ste": 1,
+    "h5st": "20260731082525258;52e2n2p557beine2;f06cc;tk03waee71cc118n0XY7D3qpWow0Obr4wRoAAq7p2fZy4jPY4Ngs5izGWHVQucfqxZ1_e2mq0az9qTVlQH4xDkumUmLB;a36670e9f0d89a780a55742a96de2a5e7724d24dd9bcd4dfb80bf422f0d42730;5.3;1785457520258;of7ruCLj5XFQCWFT0XYe7iIQ5XFf2jpjxjpPFipjLDrg0XIf7jYe0Xoe2L4e6rJdJbEjLrJp-jZQqWXbB6XPqiGWJrJdJbYf2iFjLrJp-jYfLDIj9e1TJrpjh7JjJrJdJrEa-OFTGOEjLrJp-jJTGmISKWoeKalS7j4fzPYd6XVT0n1fyjVT7Toe1jVS3jpjxj5PKSEQKeFjLrJp-jpfJrJdJbYOJipjLDrgJbIg4zZe1uWS-GFSMWoRJrJdJTEjLrJp-jJW0DEN3jEXYinYJrJdJ31QHyVT5ipjLDrgJj4f9G1WJrJdJTlPJrpjh7ZMLrJp3rJdJnYf2iFjLrpjLDrg3nojxjpf6XETJrpjLrJp-rojxjpd2iFjLrpjLDrg7rJdJTYOJipjLrpjh-kjxjpS9WlOzWFjLrJp-3kjLDLjlWmXyOUQiyna-W3TMaFRJrJdJjoPJrpjLrJpwqJdJrkPJrpjh7Jj3ToNL-oe1zVRUq5d7zpf6rpWdq5P0ulS9G1WJrJdJnVO4ipjLD7N;cf13de300a65eb0f237abfe337a533299cfd0c350cecd2cb24d83b8310bf735c;of7rHGVO26pO-XlPyaGQCO1Q-6pS5u1OyW1R-bVZ9uVR3eFQ2Slg5KlOI6JQ8G1P5WFW3yVSC61T-bEQGGlQI6ZNHuFT-bVR7qUT"
+  },
+  "environment": "browser-env-full (Chrome 150 / Win10 fingerprint)",
+  "note": "Two-phase: first call triggers cactus token fetch, second uses cached tk03w"
+}

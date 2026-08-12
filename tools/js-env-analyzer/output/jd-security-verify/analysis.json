@@ -1,0 +1,1120 @@
+{
+  "file": "D:\\pythonProject\\Crawlers\\Taobao\\tests\\JD\\js_security_v3_0.1.6.js",
+  "globals": [
+    {
+      "name": "window",
+      "kind": "object",
+      "usage": "read",
+      "description": "browser global object",
+      "strategy": "alias global object",
+      "locations": [
+        {
+          "line": 758,
+          "column": 101
+        },
+        {
+          "line": 758,
+          "column": 101
+        },
+        {
+          "line": 758,
+          "column": 111
+        },
+        {
+          "line": 804,
+          "column": 100
+        },
+        {
+          "line": 804,
+          "column": 110
+        },
+        {
+          "line": 2369,
+          "column": 53
+        },
+        {
+          "line": 3516,
+          "column": 35
+        },
+        {
+          "line": 3516,
+          "column": 45
+        },
+        {
+          "line": 3516,
+          "column": 111
+        },
+        {
+          "line": 4168,
+          "column": 34
+        },
+        {
+          "line": 4168,
+          "column": 44
+        },
+        {
+          "line": 4168,
+          "column": 69
+        },
+        {
+          "line": 4169,
+          "column": 47
+        },
+        {
+          "line": 4169,
+          "column": 58
+        },
+        {
+          "line": 4169,
+          "column": 85
+        },
+        {
+          "line": 5480,
+          "column": 15
+        },
+        {
+          "line": 5480,
+          "column": 50
+        },
+        {
+          "line": 5481,
+          "column": 8
+        },
+        {
+          "line": 5481,
+          "column": 49
+        },
+        {
+          "line": 5620,
+          "column": 30
+        },
+        {
+          "line": 5677,
+          "column": 14
+        },
+        {
+          "line": 5677,
+          "column": 60
+        },
+        {
+          "line": 5677,
+          "column": 114
+        },
+        {
+          "line": 5677,
+          "column": 268
+        },
+        {
+          "line": 5677,
+          "column": 305
+        },
+        {
+          "line": 5678,
+          "column": 69
+        },
+        {
+          "line": 5678,
+          "column": 125
+        },
+        {
+          "line": 5697,
+          "column": 12
+        },
+        {
+          "line": 5710,
+          "column": 29
+        },
+        {
+          "line": 5710,
+          "column": 64
+        },
+        {
+          "line": 5721,
+          "column": 14
+        },
+        {
+          "line": 6591,
+          "column": 15
+        },
+        {
+          "line": 8654,
+          "column": 31
+        },
+        {
+          "line": 8740,
+          "column": 91
+        },
+        {
+          "line": 8740,
+          "column": 145
+        },
+        {
+          "line": 8743,
+          "column": 19
+        },
+        {
+          "line": 8746,
+          "column": 19
+        },
+        {
+          "line": 8749,
+          "column": 19
+        },
+        {
+          "line": 8752,
+          "column": 19
+        },
+        {
+          "line": 8755,
+          "column": 19
+        },
+        {
+          "line": 8758,
+          "column": 19
+        },
+        {
+          "line": 8761,
+          "column": 19
+        },
+        {
+          "line": 8766,
+          "column": 23
+        },
+        {
+          "line": 8812,
+          "column": 19
+        },
+        {
+          "line": 8815,
+          "column": 19
+        },
+        {
+          "line": 8818,
+          "column": 19
+        },
+        {
+          "line": 8821,
+          "column": 19
+        },
+        {
+          "line": 8830,
+          "column": 19
+        },
+        {
+          "line": 8833,
+          "column": 19
+        },
+        {
+          "line": 10600,
+          "column": 4
+        }
+      ]
+    },
+    {
+      "name": "Reflect",
+      "kind": "object",
+      "usage": "read",
+      "description": "reflection API",
+      "strategy": "minimal reflection object",
+      "locations": [
+        {
+          "line": 811,
+          "column": 34
+        },
+        {
+          "line": 811,
+          "column": 34
+        },
+        {
+          "line": 811,
+          "column": 45
+        }
+      ]
+    },
+    {
+      "name": "document",
+      "kind": "object",
+      "usage": "read",
+      "description": "DOM document access",
+      "strategy": "minimal document object",
+      "locations": [
+        {
+          "line": 828,
+          "column": 34
+        },
+        {
+          "line": 828,
+          "column": 34
+        },
+        {
+          "line": 828,
+          "column": 46
+        },
+        {
+          "line": 1734,
+          "column": 37
+        },
+        {
+          "line": 1734,
+          "column": 48
+        },
+        {
+          "line": 2369,
+          "column": 83
+        },
+        {
+          "line": 5331,
+          "column": 19
+        },
+        {
+          "line": 5456,
+          "column": 31
+        },
+        {
+          "line": 5465,
+          "column": 20
+        },
+        {
+          "line": 5485,
+          "column": 19
+        },
+        {
+          "line": 8446,
+          "column": 31
+        },
+        {
+          "line": 8800,
+          "column": 27
+        },
+        {
+          "line": 8836,
+          "column": 19
+        },
+        {
+          "line": 8844,
+          "column": 23
+        }
+      ]
+    },
+    {
+      "name": "navigator",
+      "kind": "object",
+      "usage": "read",
+      "description": "browser and device metadata",
+      "strategy": "minimal navigator object",
+      "locations": [
+        {
+          "line": 887,
+          "column": 44
+        },
+        {
+          "line": 887,
+          "column": 44
+        },
+        {
+          "line": 887,
+          "column": 76
+        },
+        {
+          "line": 8363,
+          "column": 31
+        },
+        {
+          "line": 8867,
+          "column": 28
+        },
+        {
+          "line": 8867,
+          "column": 127
+        },
+        {
+          "line": 8889,
+          "column": 19
+        }
+      ]
+    },
+    {
+      "name": "setTimeout",
+      "kind": "function",
+      "usage": "call",
+      "description": "timer scheduling API",
+      "strategy": "synchronous timer stub",
+      "locations": [
+        {
+          "line": 2276,
+          "column": 8
+        },
+        {
+          "line": 2276,
+          "column": 8
+        },
+        {
+          "line": 5455,
+          "column": 31
+        },
+        {
+          "line": 5656,
+          "column": 74
+        },
+        {
+          "line": 9855,
+          "column": 47
+        }
+      ]
+    },
+    {
+      "name": "console",
+      "kind": "object",
+      "usage": "member-access",
+      "description": "browser developer console",
+      "strategy": "no-op console methods",
+      "locations": [
+        {
+          "line": 2444,
+          "column": 60
+        },
+        {
+          "line": 2444,
+          "column": 60
+        },
+        {
+          "line": 2444,
+          "column": 82
+        },
+        {
+          "line": 5400,
+          "column": 12
+        },
+        {
+          "line": 5400,
+          "column": 30
+        }
+      ]
+    },
+    {
+      "name": "clearTimeout",
+      "kind": "function",
+      "usage": "read",
+      "description": "timer cancellation API",
+      "strategy": "no-op timer cancellation",
+      "locations": [
+        {
+          "line": 5450,
+          "column": 39
+        },
+        {
+          "line": 5450,
+          "column": 39
+        },
+        {
+          "line": 5629,
+          "column": 24
+        }
+      ]
+    },
+    {
+      "name": "Document",
+      "kind": "constructor",
+      "usage": "member-access",
+      "description": "DOM document constructor",
+      "strategy": "minimal Document constructor",
+      "locations": [
+        {
+          "line": 5695,
+          "column": 23
+        },
+        {
+          "line": 5695,
+          "column": 23
+        }
+      ]
+    },
+    {
+      "name": "Element",
+      "kind": "constructor",
+      "usage": "member-access",
+      "description": "DOM element constructor",
+      "strategy": "minimal Element constructor",
+      "locations": [
+        {
+          "line": 5698,
+          "column": 29
+        },
+        {
+          "line": 5698,
+          "column": 29
+        },
+        {
+          "line": 5698,
+          "column": 75
+        },
+        {
+          "line": 5709,
+          "column": 14
+        }
+      ]
+    },
+    {
+      "name": "Window",
+      "kind": "constructor",
+      "usage": "read",
+      "description": "browser window constructor",
+      "strategy": "minimal Window constructor",
+      "locations": [
+        {
+          "line": 8545,
+          "column": 31
+        },
+        {
+          "line": 8545,
+          "column": 31
+        },
+        {
+          "line": 8858,
+          "column": 19
+        },
+        {
+          "line": 8858,
+          "column": 45
+        }
+      ]
+    },
+    {
+      "name": "location",
+      "kind": "object",
+      "usage": "member-access",
+      "description": "browser URL location",
+      "strategy": "minimal location object",
+      "locations": [
+        {
+          "line": 8824,
+          "column": 19
+        },
+        {
+          "line": 8824,
+          "column": 19
+        },
+        {
+          "line": 8827,
+          "column": 19
+        }
+      ]
+    }
+  ],
+  "prototypeMembers": [
+    {
+      "path": "Document.prototype.all",
+      "context": "read",
+      "summary": "document.all",
+      "locations": [
+        {
+          "line": 828,
+          "column": 46
+        },
+        {
+          "line": 828,
+          "column": 46
+        }
+      ]
+    },
+    {
+      "path": "Navigator.prototype.userAgent",
+      "context": "read",
+      "summary": "navigator.userAgent) || '', _$R8 = _$i, _$R9 = _$R7, _$RR = _$R8.process, _$RT = _$R8.Deno, _$RI = _$RR && _$RR.version",
+      "locations": [
+        {
+          "line": 887,
+          "column": 76
+        },
+        {
+          "line": 887,
+          "column": 76
+        },
+        {
+          "line": 8867,
+          "column": 28
+        },
+        {
+          "line": 8867,
+          "column": 127
+        }
+      ]
+    },
+    {
+      "path": "Document.prototype.domain",
+      "context": "read",
+      "summary": "document.domain && _$dd ? _$dP(_$dd) : (_$PA = _$di(zU(0x26d)),",
+      "locations": [
+        {
+          "line": 1734,
+          "column": 48
+        },
+        {
+          "line": 1734,
+          "column": 48
+        }
+      ]
+    },
+    {
+      "path": "Console.prototype.error",
+      "context": "call",
+      "summary": "console.error(_$Pv) : console.error(_$Pv, _$PA);",
+      "locations": [
+        {
+          "line": 2444,
+          "column": 60
+        },
+        {
+          "line": 2444,
+          "column": 60
+        },
+        {
+          "line": 2444,
+          "column": 82
+        }
+      ]
+    },
+    {
+      "path": "Window.prototype.crypto",
+      "context": "read",
+      "summary": "window.crypto && (_$Pm = window.crypto),",
+      "locations": [
+        {
+          "line": 4168,
+          "column": 44
+        },
+        {
+          "line": 4168,
+          "column": 44
+        },
+        {
+          "line": 4168,
+          "column": 69
+        }
+      ]
+    },
+    {
+      "path": "Window.prototype.msCrypto",
+      "context": "read",
+      "summary": "window.msCrypto && (_$Pm = window.msCrypto),",
+      "locations": [
+        {
+          "line": 4169,
+          "column": 58
+        },
+        {
+          "line": 4169,
+          "column": 58
+        },
+        {
+          "line": 4169,
+          "column": 85
+        }
+      ]
+    },
+    {
+      "path": "Document.prototype.cookie",
+      "context": "read",
+      "summary": "document.cookie.match(_$Px);",
+      "locations": [
+        {
+          "line": 5331,
+          "column": 19
+        },
+        {
+          "line": 5331,
+          "column": 19
+        },
+        {
+          "line": 8800,
+          "column": 27
+        }
+      ]
+    },
+    {
+      "path": "Console.prototype.log",
+      "context": "call",
+      "summary": "console.log.apply(console, _$vP(_$PM = [Xe(0x2c0)]).call(_$PM, _$PG));",
+      "locations": [
+        {
+          "line": 5400,
+          "column": 12
+        },
+        {
+          "line": 5400,
+          "column": 12
+        }
+      ]
+    },
+    {
+      "path": "Document.prototype.createElement",
+      "context": "call",
+      "summary": "document.createElement(XU(0x23b));",
+      "locations": [
+        {
+          "line": 5456,
+          "column": 31
+        },
+        {
+          "line": 5456,
+          "column": 31
+        },
+        {
+          "line": 5485,
+          "column": 19
+        }
+      ]
+    },
+    {
+      "path": "Document.prototype.getElementsByTagName",
+      "context": "call",
+      "summary": "document.getElementsByTagName(XU(0x263))[0x168c + 0x1348 + -0x29d4].appendChild(_$Pz);",
+      "locations": [
+        {
+          "line": 5465,
+          "column": 20
+        },
+        {
+          "line": 5465,
+          "column": 20
+        }
+      ]
+    },
+    {
+      "path": "Window.prototype.__JDWEBSIGNHELPER_$DATA__",
+      "context": "write",
+      "summary": "window.__JDWEBSIGNHELPER_$DATA__ = window.__JDWEBSIGNHELPER_$DATA__ || {},",
+      "locations": [
+        {
+          "line": 5480,
+          "column": 15
+        },
+        {
+          "line": 5480,
+          "column": 15
+        },
+        {
+          "line": 5480,
+          "column": 50
+        },
+        {
+          "line": 5481,
+          "column": 8
+        },
+        {
+          "line": 5481,
+          "column": 49
+        }
+      ]
+    },
+    {
+      "path": "Window.prototype.XMLHttpRequest",
+      "context": "read",
+      "summary": "window.XMLHttpRequest(), _$PQ = _$PU.setRequestHeader;",
+      "locations": [
+        {
+          "line": 5620,
+          "column": 30
+        },
+        {
+          "line": 5620,
+          "column": 30
+        }
+      ]
+    },
+    {
+      "path": "Window.prototype.__MICRO_APP_ENVIRONMENT_TEMPORARY__",
+      "context": "read",
+      "summary": "window.__MICRO_APP_ENVIRONMENT_TEMPORARY__ || window.__MICRO_APP_ENVIRONMENT__ || (null === (_$Pd = window.rawWindow) || void (0x7 * -0xdb + 0",
+      "locations": [
+        {
+          "line": 5677,
+          "column": 14
+        },
+        {
+          "line": 5677,
+          "column": 14
+        }
+      ]
+    },
+    {
+      "path": "Window.prototype.__MICRO_APP_ENVIRONMENT__",
+      "context": "read",
+      "summary": "window.__MICRO_APP_ENVIRONMENT__ || (null === (_$Pd = window.rawWindow) || void (0x7 * -0xdb + 0x617 + -0x1a) === _$Pd ? void (0x3 *",
+      "locations": [
+        {
+          "line": 5677,
+          "column": 60
+        },
+        {
+          "line": 5677,
+          "column": 60
+        }
+      ]
+    },
+    {
+      "path": "Window.prototype.rawWindow",
+      "context": "read",
+      "summary": "window.rawWindow) || void (0x7 * -0xdb + 0x617 + -0x1a) === _$Pd ? void (0x3 * -0x6d0 + 0x1 * 0x2b9 + -0x38b * -0x5)",
+      "locations": [
+        {
+          "line": 5677,
+          "column": 114
+        },
+        {
+          "line": 5677,
+          "column": 114
+        }
+      ]
+    },
+    {
+      "path": "Window.prototype.__MICRO_APP_PROXY_WINDOW__",
+      "context": "read",
+      "summary": "window.__MICRO_APP_PROXY_WINDOW__ || window.__MICRO_APP_BASE_APPLICATION__)) {",
+      "locations": [
+        {
+          "line": 5677,
+          "column": 268
+        },
+        {
+          "line": 5677,
+          "column": 268
+        }
+      ]
+    },
+    {
+      "path": "Window.prototype.__MICRO_APP_BASE_APPLICATION__",
+      "context": "read",
+      "summary": "window.__MICRO_APP_BASE_APPLICATION__)) {",
+      "locations": [
+        {
+          "line": 5677,
+          "column": 305
+        },
+        {
+          "line": 5677,
+          "column": 305
+        }
+      ]
+    },
+    {
+      "path": "Window.prototype.document",
+      "context": "read",
+      "summary": "window.document)).call(_$PM, _$R.WfHDO), _$PG = (_$Px = window.document.querySelector,",
+      "locations": [
+        {
+          "line": 5678,
+          "column": 69
+        },
+        {
+          "line": 5678,
+          "column": 69
+        },
+        {
+          "line": 5678,
+          "column": 125
+        },
+        {
+          "line": 5697,
+          "column": 12
+        }
+      ]
+    },
+    {
+      "path": "Document.prototype.querySelector",
+      "context": "call",
+      "summary": "Document.prototype.querySelector.apply(this, arguments);",
+      "locations": [
+        {
+          "line": 5695,
+          "column": 23
+        },
+        {
+          "line": 5695,
+          "column": 23
+        }
+      ]
+    },
+    {
+      "path": "Element.prototype.scrollIntoViewIfNeeded",
+      "context": "write",
+      "summary": "Element.prototype.scrollIntoViewIfNeeded = function(_$Pe) {",
+      "locations": [
+        {
+          "line": 5698,
+          "column": 75
+        },
+        {
+          "line": 5698,
+          "column": 75
+        },
+        {
+          "line": 5709,
+          "column": 14
+        }
+      ]
+    },
+    {
+      "path": "Window.prototype.getComputedStyle",
+      "context": "write",
+      "summary": "window.getComputedStyle = function(_$Pe) {",
+      "locations": [
+        {
+          "line": 5710,
+          "column": 64
+        },
+        {
+          "line": 5710,
+          "column": 64
+        },
+        {
+          "line": 5721,
+          "column": 14
+        }
+      ]
+    },
+    {
+      "path": "Window.prototype.localStorage",
+      "context": "read",
+      "summary": "window.localStorage",
+      "locations": [
+        {
+          "line": 6591,
+          "column": 15
+        },
+        {
+          "line": 6591,
+          "column": 15
+        }
+      ]
+    },
+    {
+      "path": "Window.prototype.navigator",
+      "context": "read",
+      "summary": "window.navigator.userAgent).call(_$Pg, XB(0x206))) || window.chrome ? 0x68 * -0x15 + -0x2668 + 0x2ef0 : 0x1 * 0xde7 ",
+      "locations": [
+        {
+          "line": 8740,
+          "column": 91
+        },
+        {
+          "line": 8740,
+          "column": 91
+        },
+        {
+          "line": 8743,
+          "column": 19
+        },
+        {
+          "line": 8746,
+          "column": 19
+        },
+        {
+          "line": 8749,
+          "column": 19
+        },
+        {
+          "line": 8752,
+          "column": 19
+        },
+        {
+          "line": 8755,
+          "column": 19
+        },
+        {
+          "line": 8758,
+          "column": 19
+        },
+        {
+          "line": 8761,
+          "column": 19
+        },
+        {
+          "line": 8766,
+          "column": 23
+        },
+        {
+          "line": 8830,
+          "column": 19
+        }
+      ]
+    },
+    {
+      "path": "Window.prototype.chrome",
+      "context": "read",
+      "summary": "window.chrome ? 0x68 * -0x15 + -0x2668 + 0x2ef0 : 0x1 * 0xde7 + -0x914 * -0x2 + -0x200e;",
+      "locations": [
+        {
+          "line": 8740,
+          "column": 145
+        },
+        {
+          "line": 8740,
+          "column": 145
+        }
+      ]
+    },
+    {
+      "path": "Window.prototype.screen",
+      "context": "read",
+      "summary": "window.screen.width;",
+      "locations": [
+        {
+          "line": 8812,
+          "column": 19
+        },
+        {
+          "line": 8812,
+          "column": 19
+        },
+        {
+          "line": 8815,
+          "column": 19
+        }
+      ]
+    },
+    {
+      "path": "Window.prototype.outerWidth",
+      "context": "read",
+      "summary": "window.outerWidth;",
+      "locations": [
+        {
+          "line": 8818,
+          "column": 19
+        },
+        {
+          "line": 8818,
+          "column": 19
+        }
+      ]
+    },
+    {
+      "path": "Window.prototype.outerHeight",
+      "context": "read",
+      "summary": "window.outerHeight;",
+      "locations": [
+        {
+          "line": 8821,
+          "column": 19
+        },
+        {
+          "line": 8821,
+          "column": 19
+        }
+      ]
+    },
+    {
+      "path": "Location.prototype.href",
+      "context": "read",
+      "summary": "location.href;",
+      "locations": [
+        {
+          "line": 8824,
+          "column": 19
+        },
+        {
+          "line": 8824,
+          "column": 19
+        }
+      ]
+    },
+    {
+      "path": "Location.prototype.origin",
+      "context": "read",
+      "summary": "location.origin;",
+      "locations": [
+        {
+          "line": 8827,
+          "column": 19
+        },
+        {
+          "line": 8827,
+          "column": 19
+        }
+      ]
+    },
+    {
+      "path": "Window.prototype.devicePixelRatio",
+      "context": "read",
+      "summary": "window.devicePixelRatio;",
+      "locations": [
+        {
+          "line": 8833,
+          "column": 19
+        },
+        {
+          "line": 8833,
+          "column": 19
+        }
+      ]
+    },
+    {
+      "path": "Document.prototype.referrer",
+      "context": "read",
+      "summary": "document.referrer;",
+      "locations": [
+        {
+          "line": 8836,
+          "column": 19
+        },
+        {
+          "line": 8836,
+          "column": 19
+        },
+        {
+          "line": 8844,
+          "column": 23
+        }
+      ]
+    },
+    {
+      "path": "Window.prototype.toString",
+      "context": "call",
+      "summary": "Window.toString() + '$' + Window.toString.toString.toString();",
+      "locations": [
+        {
+          "line": 8858,
+          "column": 19
+        },
+        {
+          "line": 8858,
+          "column": 19
+        },
+        {
+          "line": 8858,
+          "column": 45
+        }
+      ]
+    },
+    {
+      "path": "Navigator.prototype.hardwareConcurrency",
+      "context": "read",
+      "summary": "navigator.hardwareConcurrency;",
+      "locations": [
+        {
+          "line": 8889,
+          "column": 19
+        },
+        {
+          "line": 8889,
+          "column": 19
+        }
+      ]
+    },
+    {
+      "path": "Window.prototype.ParamsSign",
+      "context": "write",
+      "summary": "window.ParamsSign = _$PI,",
+      "locations": [
+        {
+          "line": 10600,
+          "column": 4
+        },
+        {
+          "line": 10600,
+          "column": 4
+        }
+      ]
+    }
+  ]
+}

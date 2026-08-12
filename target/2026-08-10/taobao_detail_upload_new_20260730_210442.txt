@@ -1,0 +1,7 @@
+updated_since=2026-07-29T13:55:53+00:00
+started_at=2026-07-30T21:04:42.1537169+08:00
+db=data/taobao_item_get.sqlite3
+success_only=true
+dry_run_prepared=622
+finished_at=2026-07-30T21:04:54.7130773+08:00
+exit_code=0

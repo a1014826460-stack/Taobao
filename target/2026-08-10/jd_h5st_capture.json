@@ -1,0 +1,71 @@
+{
+  "captured_at": "2026-07-30T18:36:00+08:00",
+  "summary": {
+    "browser_user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126",
+    "h5st_version": "5.3",
+    "key_finding": "不同的 appid 使用不同的 appId 和 fingerprint，h5st 结构一致"
+  },
+  "patterns": [
+    {
+      "scene": "首页 (www-jd-com)",
+      "appid": "www-jd-com",
+      "h5st_appId_segment": "b5216",
+      "fingerprint": "jeeeeni51vzn2zn5",
+      "token_prefix": "tk03w",
+      "example_h5st": "20260730183547699;jeeeeni51vzn2zn5;b5216;tk03wd2c51d1418nUVJNZAquPj...",
+      "functions": ["pchome_firstScreenSoa", "jsfbox_pre_gb", "pctradesoa_queryPlusInfo"]
+    },
+    {
+      "scene": "商品详情 (pc-item-soa)",
+      "appid": "pc-item-soa",
+      "h5st_appId_segment": "fb5df",
+      "fingerprint": "2bepppnnpib71pb2",
+      "token_prefix": "tk06w",
+      "example_h5st": "20260730183602543;2bepppnnpib71pb2;fb5df;tk06w014c4a6841lfJ-4NofAfVm_pj...",
+      "functionId": "pc_detailpage_wareBusiness"
+    },
+    {
+      "scene": "搜索 (search-pc-java) - 未登录",
+      "appid": "search-pc-java",
+      "h5st_appId_segment": null,
+      "fingerprint": null,
+      "note": "搜索接口在未登录状态下不需要 h5st 签名"
+    }
+  ],
+  "wareBusiness_request": {
+    "full_url_template": "https://api.m.jd.com/?functionId=pc_detailpage_wareBusiness&body={body}&h5st={h5st}&uuid={uuid}&loginType={loginType}&appid=pc-item-soa&clientVersion=1.0.0&client=pc&t={t}&x-api-eid-token={token}",
+    "params": {
+      "appid": "pc-item-soa",
+      "functionId": "pc_detailpage_wareBusiness",
+      "client": "pc",
+      "clientVersion": "1.0.0",
+      "t": 1785407757508,
+      "body": "{\"skuId\":\"10147072608797\",\"area\":\"19_1659_0_0\",\"num\":\"1\",\"clientSource\":\"PC\",\"sfTime\":\"1,0,0\"}",
+      "loginType": 3,
+      "uuid": "17854075363601606079882",
+      "x-api-eid-token": "jdd03CTCYZZNZ77QGRZJDXO3BUYCJRCPB6XGTKJ7C4EWIVTCX4EE3FZIGTU7YYMN3BKPLIPP6DWUYMWG6FGADTVENFRKQCMAAAAM7WKL5SKQAAAAACB4SFJWLXD4VY4X"
+    },
+    "h5st_structure": {
+      "segments": 10,
+      "format": "<timestamp>;<fingerprint>;<appId>;<encrypted_token>;<hash>;<version>;<timestamp2>;<body_signature>;<checksum>;<final>",
+      "decoded": {
+        "timestamp": "20260730183602543",
+        "fingerprint": "2bepppnnpib71pb2",
+        "appId": "fb5df",
+        "token": "tk06w014c4a6841lfJ-4NofAfVm_pjLfJqUf0jVR7yFQ7qkPGiFfrrbrMhgFPKdfJqIY6SoeVO3e4HndGGodFqYfGGYd",
+        "hash": "35953ab12e7c739c13805329785c197662e51facd458076b905fd76ba3f1a608",
+        "version": "5.3",
+        "timestamp2": "1785407757543",
+        "body_signature": "of7ruCLjzzZf9rIjLDIj6XETJrpjh7Jj5jlP6PITCqEQ9qkP7WFT5jpjxjpPFipjLDrgzfYe0X4e0roe2L4e6rJdJbEjLrJp-jZQqWXbB6XPqiGWJrJdJbYf2iFjLrJp-jYfLDIj9e1TJrpjh7JjJrJdJrEa-OFTGOEjLrJp-jZdFKYdIi1e5jVd4P4THmVf0X4Tyj1T4bVS2fVfFeof0jpjxj5PKSEQKeFjLrJp-jpfJrJdJbYOJipjLDrgJbIg4zZe1uWS-GFSMWoRJrJdJTEjLrJp-jpWVqIe3HYV0u2eJrJdJ31QHyVT5ipjLDrgJj4f9G1WJrJdJTlPJrpjh7ZMLrJp3rJdJnYf2iFjLrpjLDrg3nojxjpf6XETJrpjLrJp-LYgLDIj5nYOJipjLrpjh7Jj9ioW1boeJ2nVjuGjLDIj_ulS9mFPJrpjLrJp-rojxjpd2iFjLrpjLDrg7rJdJPYOJipjLrpjh7Zf5rJdJTYOJipjLrpjh7pfLDIj2XETJrpjLrJp-rojxjpe2iFjLrpjLDrgyfojxj5f2iFjLrpjLDrgJHIg6zpfJrJdJnYOJipjLrpjh7pfLDIjAOEjLrpjLDrg2rJdJfkQJrpjLrJp-rojxjpQJrpjLrJp-rojxjpS0ipjLrpjh-kjxjpS9WlOzWFjLrJp-3kjLDLjlWmXyOUQiyna-W3TMaFRJrJdJjoPJrpjLrJpwqJdJrkPJrpjh7Jj3ToNL-oe1zVRUq5d7zpf6rpWdq5P0ulS9G1WJrJdJnVO4ipjLD7N",
+        "checksum": "58e7ee1332d0d816cf3efb340d8fb3d58c8fa399e84752a4f7eec7fd117f0544",
+        "final": "qbkgHGHQ8GlOIyVOF6JQ8G1P5WFW3yVSC61T-bEQGGlQI6ZNHuFT-bVR7qUT"
+      }
+    }
+  },
+  "nodejs_vs_browser_comparison": {
+    "timestamp_format": {"browser": "20260730...", "nodejs_shim": "yyyy0730...", "reason": "SDK在无浏览器环境下使用占位符格式"},
+    "fingerprint": {"browser": "真实指纹 (2bepppnnpib71pb2 / jeeeeni51vzn2zn5)", "nodejs_shim": "假指纹 (基于空值生成)"},
+    "appId": {"browser": "fb5df (pc-item-soa) / b5216 (www-jd-com)", "nodejs_shim": "fb5df (硬编码，恰好与pc-item-soa一致)"},
+    "token_body": {"browser": "真实加密体", "nodejs_shim": "不同加密体 (指纹+环境差异导致)"}
+  }
+}

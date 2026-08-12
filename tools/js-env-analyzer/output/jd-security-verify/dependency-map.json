@@ -1,0 +1,1093 @@
+{
+  "window": {
+    "kind": "object",
+    "description": "browser global object",
+    "strategy": "alias global object",
+    "locations": [
+      {
+        "line": 758,
+        "column": 101
+      },
+      {
+        "line": 758,
+        "column": 101
+      },
+      {
+        "line": 758,
+        "column": 111
+      },
+      {
+        "line": 804,
+        "column": 100
+      },
+      {
+        "line": 804,
+        "column": 110
+      },
+      {
+        "line": 2369,
+        "column": 53
+      },
+      {
+        "line": 3516,
+        "column": 35
+      },
+      {
+        "line": 3516,
+        "column": 45
+      },
+      {
+        "line": 3516,
+        "column": 111
+      },
+      {
+        "line": 4168,
+        "column": 34
+      },
+      {
+        "line": 4168,
+        "column": 44
+      },
+      {
+        "line": 4168,
+        "column": 69
+      },
+      {
+        "line": 4169,
+        "column": 47
+      },
+      {
+        "line": 4169,
+        "column": 58
+      },
+      {
+        "line": 4169,
+        "column": 85
+      },
+      {
+        "line": 5480,
+        "column": 15
+      },
+      {
+        "line": 5480,
+        "column": 50
+      },
+      {
+        "line": 5481,
+        "column": 8
+      },
+      {
+        "line": 5481,
+        "column": 49
+      },
+      {
+        "line": 5620,
+        "column": 30
+      },
+      {
+        "line": 5677,
+        "column": 14
+      },
+      {
+        "line": 5677,
+        "column": 60
+      },
+      {
+        "line": 5677,
+        "column": 114
+      },
+      {
+        "line": 5677,
+        "column": 268
+      },
+      {
+        "line": 5677,
+        "column": 305
+      },
+      {
+        "line": 5678,
+        "column": 69
+      },
+      {
+        "line": 5678,
+        "column": 125
+      },
+      {
+        "line": 5697,
+        "column": 12
+      },
+      {
+        "line": 5710,
+        "column": 29
+      },
+      {
+        "line": 5710,
+        "column": 64
+      },
+      {
+        "line": 5721,
+        "column": 14
+      },
+      {
+        "line": 6591,
+        "column": 15
+      },
+      {
+        "line": 8654,
+        "column": 31
+      },
+      {
+        "line": 8740,
+        "column": 91
+      },
+      {
+        "line": 8740,
+        "column": 145
+      },
+      {
+        "line": 8743,
+        "column": 19
+      },
+      {
+        "line": 8746,
+        "column": 19
+      },
+      {
+        "line": 8749,
+        "column": 19
+      },
+      {
+        "line": 8752,
+        "column": 19
+      },
+      {
+        "line": 8755,
+        "column": 19
+      },
+      {
+        "line": 8758,
+        "column": 19
+      },
+      {
+        "line": 8761,
+        "column": 19
+      },
+      {
+        "line": 8766,
+        "column": 23
+      },
+      {
+        "line": 8812,
+        "column": 19
+      },
+      {
+        "line": 8815,
+        "column": 19
+      },
+      {
+        "line": 8818,
+        "column": 19
+      },
+      {
+        "line": 8821,
+        "column": 19
+      },
+      {
+        "line": 8830,
+        "column": 19
+      },
+      {
+        "line": 8833,
+        "column": 19
+      },
+      {
+        "line": 10600,
+        "column": 4
+      }
+    ]
+  },
+  "Reflect": {
+    "kind": "object",
+    "description": "reflection API",
+    "strategy": "minimal reflection object",
+    "locations": [
+      {
+        "line": 811,
+        "column": 34
+      },
+      {
+        "line": 811,
+        "column": 34
+      },
+      {
+        "line": 811,
+        "column": 45
+      }
+    ]
+  },
+  "document": {
+    "kind": "object",
+    "description": "DOM document access",
+    "strategy": "minimal document object",
+    "locations": [
+      {
+        "line": 828,
+        "column": 34
+      },
+      {
+        "line": 828,
+        "column": 34
+      },
+      {
+        "line": 828,
+        "column": 46
+      },
+      {
+        "line": 1734,
+        "column": 37
+      },
+      {
+        "line": 1734,
+        "column": 48
+      },
+      {
+        "line": 2369,
+        "column": 83
+      },
+      {
+        "line": 5331,
+        "column": 19
+      },
+      {
+        "line": 5456,
+        "column": 31
+      },
+      {
+        "line": 5465,
+        "column": 20
+      },
+      {
+        "line": 5485,
+        "column": 19
+      },
+      {
+        "line": 8446,
+        "column": 31
+      },
+      {
+        "line": 8800,
+        "column": 27
+      },
+      {
+        "line": 8836,
+        "column": 19
+      },
+      {
+        "line": 8844,
+        "column": 23
+      }
+    ]
+  },
+  "navigator": {
+    "kind": "object",
+    "description": "browser and device metadata",
+    "strategy": "minimal navigator object",
+    "locations": [
+      {
+        "line": 887,
+        "column": 44
+      },
+      {
+        "line": 887,
+        "column": 44
+      },
+      {
+        "line": 887,
+        "column": 76
+      },
+      {
+        "line": 8363,
+        "column": 31
+      },
+      {
+        "line": 8867,
+        "column": 28
+      },
+      {
+        "line": 8867,
+        "column": 127
+      },
+      {
+        "line": 8889,
+        "column": 19
+      }
+    ]
+  },
+  "setTimeout": {
+    "kind": "function",
+    "description": "timer scheduling API",
+    "strategy": "synchronous timer stub",
+    "locations": [
+      {
+        "line": 2276,
+        "column": 8
+      },
+      {
+        "line": 2276,
+        "column": 8
+      },
+      {
+        "line": 5455,
+        "column": 31
+      },
+      {
+        "line": 5656,
+        "column": 74
+      },
+      {
+        "line": 9855,
+        "column": 47
+      }
+    ]
+  },
+  "console": {
+    "kind": "object",
+    "description": "browser developer console",
+    "strategy": "no-op console methods",
+    "locations": [
+      {
+        "line": 2444,
+        "column": 60
+      },
+      {
+        "line": 2444,
+        "column": 60
+      },
+      {
+        "line": 2444,
+        "column": 82
+      },
+      {
+        "line": 5400,
+        "column": 12
+      },
+      {
+        "line": 5400,
+        "column": 30
+      }
+    ]
+  },
+  "clearTimeout": {
+    "kind": "function",
+    "description": "timer cancellation API",
+    "strategy": "no-op timer cancellation",
+    "locations": [
+      {
+        "line": 5450,
+        "column": 39
+      },
+      {
+        "line": 5450,
+        "column": 39
+      },
+      {
+        "line": 5629,
+        "column": 24
+      }
+    ]
+  },
+  "Document": {
+    "kind": "constructor",
+    "description": "DOM document constructor",
+    "strategy": "minimal Document constructor",
+    "locations": [
+      {
+        "line": 5695,
+        "column": 23
+      },
+      {
+        "line": 5695,
+        "column": 23
+      }
+    ]
+  },
+  "Element": {
+    "kind": "constructor",
+    "description": "DOM element constructor",
+    "strategy": "minimal Element constructor",
+    "locations": [
+      {
+        "line": 5698,
+        "column": 29
+      },
+      {
+        "line": 5698,
+        "column": 29
+      },
+      {
+        "line": 5698,
+        "column": 75
+      },
+      {
+        "line": 5709,
+        "column": 14
+      }
+    ]
+  },
+  "Window": {
+    "kind": "constructor",
+    "description": "browser window constructor",
+    "strategy": "minimal Window constructor",
+    "locations": [
+      {
+        "line": 8545,
+        "column": 31
+      },
+      {
+        "line": 8545,
+        "column": 31
+      },
+      {
+        "line": 8858,
+        "column": 19
+      },
+      {
+        "line": 8858,
+        "column": 45
+      }
+    ]
+  },
+  "location": {
+    "kind": "object",
+    "description": "browser URL location",
+    "strategy": "minimal location object",
+    "locations": [
+      {
+        "line": 8824,
+        "column": 19
+      },
+      {
+        "line": 8824,
+        "column": 19
+      },
+      {
+        "line": 8827,
+        "column": 19
+      }
+    ]
+  },
+  "Document.prototype.all": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 828,
+        "column": 46
+      },
+      {
+        "line": 828,
+        "column": 46
+      }
+    ]
+  },
+  "Navigator.prototype.userAgent": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 887,
+        "column": 76
+      },
+      {
+        "line": 887,
+        "column": 76
+      },
+      {
+        "line": 8867,
+        "column": 28
+      },
+      {
+        "line": 8867,
+        "column": 127
+      }
+    ]
+  },
+  "Document.prototype.domain": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 1734,
+        "column": 48
+      },
+      {
+        "line": 1734,
+        "column": 48
+      }
+    ]
+  },
+  "Console.prototype.error": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "no-op function stub",
+    "locations": [
+      {
+        "line": 2444,
+        "column": 60
+      },
+      {
+        "line": 2444,
+        "column": 60
+      },
+      {
+        "line": 2444,
+        "column": 82
+      }
+    ]
+  },
+  "Window.prototype.crypto": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 4168,
+        "column": 44
+      },
+      {
+        "line": 4168,
+        "column": 44
+      },
+      {
+        "line": 4168,
+        "column": 69
+      }
+    ]
+  },
+  "Window.prototype.msCrypto": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 4169,
+        "column": 58
+      },
+      {
+        "line": 4169,
+        "column": 58
+      },
+      {
+        "line": 4169,
+        "column": 85
+      }
+    ]
+  },
+  "Document.prototype.cookie": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 5331,
+        "column": 19
+      },
+      {
+        "line": 5331,
+        "column": 19
+      },
+      {
+        "line": 8800,
+        "column": 27
+      }
+    ]
+  },
+  "Console.prototype.log": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "no-op function stub",
+    "locations": [
+      {
+        "line": 5400,
+        "column": 12
+      },
+      {
+        "line": 5400,
+        "column": 12
+      }
+    ]
+  },
+  "Document.prototype.createElement": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "no-op function stub",
+    "locations": [
+      {
+        "line": 5456,
+        "column": 31
+      },
+      {
+        "line": 5456,
+        "column": 31
+      },
+      {
+        "line": 5485,
+        "column": 19
+      }
+    ]
+  },
+  "Document.prototype.getElementsByTagName": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "no-op function stub",
+    "locations": [
+      {
+        "line": 5465,
+        "column": 20
+      },
+      {
+        "line": 5465,
+        "column": 20
+      }
+    ]
+  },
+  "Window.prototype.__JDWEBSIGNHELPER_$DATA__": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 5480,
+        "column": 15
+      },
+      {
+        "line": 5480,
+        "column": 15
+      },
+      {
+        "line": 5480,
+        "column": 50
+      },
+      {
+        "line": 5481,
+        "column": 8
+      },
+      {
+        "line": 5481,
+        "column": 49
+      }
+    ]
+  },
+  "Window.prototype.XMLHttpRequest": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 5620,
+        "column": 30
+      },
+      {
+        "line": 5620,
+        "column": 30
+      }
+    ]
+  },
+  "Window.prototype.__MICRO_APP_ENVIRONMENT_TEMPORARY__": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 5677,
+        "column": 14
+      },
+      {
+        "line": 5677,
+        "column": 14
+      }
+    ]
+  },
+  "Window.prototype.__MICRO_APP_ENVIRONMENT__": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 5677,
+        "column": 60
+      },
+      {
+        "line": 5677,
+        "column": 60
+      }
+    ]
+  },
+  "Window.prototype.rawWindow": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 5677,
+        "column": 114
+      },
+      {
+        "line": 5677,
+        "column": 114
+      }
+    ]
+  },
+  "Window.prototype.__MICRO_APP_PROXY_WINDOW__": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 5677,
+        "column": 268
+      },
+      {
+        "line": 5677,
+        "column": 268
+      }
+    ]
+  },
+  "Window.prototype.__MICRO_APP_BASE_APPLICATION__": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 5677,
+        "column": 305
+      },
+      {
+        "line": 5677,
+        "column": 305
+      }
+    ]
+  },
+  "Window.prototype.document": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 5678,
+        "column": 69
+      },
+      {
+        "line": 5678,
+        "column": 69
+      },
+      {
+        "line": 5678,
+        "column": 125
+      },
+      {
+        "line": 5697,
+        "column": 12
+      }
+    ]
+  },
+  "Document.prototype.querySelector": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "no-op function stub",
+    "locations": [
+      {
+        "line": 5695,
+        "column": 23
+      },
+      {
+        "line": 5695,
+        "column": 23
+      }
+    ]
+  },
+  "Element.prototype.scrollIntoViewIfNeeded": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 5698,
+        "column": 75
+      },
+      {
+        "line": 5698,
+        "column": 75
+      },
+      {
+        "line": 5709,
+        "column": 14
+      }
+    ]
+  },
+  "Window.prototype.getComputedStyle": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 5710,
+        "column": 64
+      },
+      {
+        "line": 5710,
+        "column": 64
+      },
+      {
+        "line": 5721,
+        "column": 14
+      }
+    ]
+  },
+  "Window.prototype.localStorage": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 6591,
+        "column": 15
+      },
+      {
+        "line": 6591,
+        "column": 15
+      }
+    ]
+  },
+  "Window.prototype.navigator": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 8740,
+        "column": 91
+      },
+      {
+        "line": 8740,
+        "column": 91
+      },
+      {
+        "line": 8743,
+        "column": 19
+      },
+      {
+        "line": 8746,
+        "column": 19
+      },
+      {
+        "line": 8749,
+        "column": 19
+      },
+      {
+        "line": 8752,
+        "column": 19
+      },
+      {
+        "line": 8755,
+        "column": 19
+      },
+      {
+        "line": 8758,
+        "column": 19
+      },
+      {
+        "line": 8761,
+        "column": 19
+      },
+      {
+        "line": 8766,
+        "column": 23
+      },
+      {
+        "line": 8830,
+        "column": 19
+      }
+    ]
+  },
+  "Window.prototype.chrome": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 8740,
+        "column": 145
+      },
+      {
+        "line": 8740,
+        "column": 145
+      }
+    ]
+  },
+  "Window.prototype.screen": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 8812,
+        "column": 19
+      },
+      {
+        "line": 8812,
+        "column": 19
+      },
+      {
+        "line": 8815,
+        "column": 19
+      }
+    ]
+  },
+  "Window.prototype.outerWidth": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 8818,
+        "column": 19
+      },
+      {
+        "line": 8818,
+        "column": 19
+      }
+    ]
+  },
+  "Window.prototype.outerHeight": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 8821,
+        "column": 19
+      },
+      {
+        "line": 8821,
+        "column": 19
+      }
+    ]
+  },
+  "Location.prototype.href": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 8824,
+        "column": 19
+      },
+      {
+        "line": 8824,
+        "column": 19
+      }
+    ]
+  },
+  "Location.prototype.origin": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 8827,
+        "column": 19
+      },
+      {
+        "line": 8827,
+        "column": 19
+      }
+    ]
+  },
+  "Window.prototype.devicePixelRatio": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 8833,
+        "column": 19
+      },
+      {
+        "line": 8833,
+        "column": 19
+      }
+    ]
+  },
+  "Document.prototype.referrer": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 8836,
+        "column": 19
+      },
+      {
+        "line": 8836,
+        "column": 19
+      },
+      {
+        "line": 8844,
+        "column": 23
+      }
+    ]
+  },
+  "Window.prototype.toString": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "no-op function stub",
+    "locations": [
+      {
+        "line": 8858,
+        "column": 19
+      },
+      {
+        "line": 8858,
+        "column": 19
+      },
+      {
+        "line": 8858,
+        "column": 45
+      }
+    ]
+  },
+  "Navigator.prototype.hardwareConcurrency": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 8889,
+        "column": 19
+      },
+      {
+        "line": 8889,
+        "column": 19
+      }
+    ]
+  },
+  "Window.prototype.ParamsSign": {
+    "kind": "prototype-member",
+    "description": "Browser prototype member used by the target source",
+    "strategy": "safe property descriptor",
+    "locations": [
+      {
+        "line": 10600,
+        "column": 4
+      },
+      {
+        "line": 10600,
+        "column": 4
+      }
+    ]
+  }
+}

@@ -96,7 +96,7 @@ class BrowserPool:
             return self.instances[account_id]
         if self.max_instances is not None and len(self.instances) >= self.max_instances:
             raise RuntimeError("maximum browser instances reached")
-        launch_kwargs: dict[str, Any] = {"headless": self.headless, "locale": self.locale}
+        launch_kwargs: dict[str, Any] = {"headless": self.headless}
         if self.proxy is not None:
             launch_kwargs["proxy"] = self.proxy
         browser = await _maybe_await(self.browser_factory(**launch_kwargs))
@@ -118,3 +118,4 @@ class BrowserPool:
     async def close_all(self) -> None:
         for account_id in list(self.instances):
             await self.stop_account(account_id)
+

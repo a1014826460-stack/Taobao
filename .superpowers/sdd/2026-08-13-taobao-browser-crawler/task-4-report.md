@@ -7,3 +7,5 @@
 - Concerns: callers should provide `DelayPolicy.sleep_func` no-op in unit tests; production defaults use `asyncio.sleep`.
 
 - Follow-up: commit 9f1b456; unknown/failed height skips scrolling; DelayPolicy.wait rejects negative or >max_seconds; regression suite 7 passed.
+
+- Follow-up: commit 9718ae1; non-numeric/NaN/inf heights now skip scrolling; regression test passed.

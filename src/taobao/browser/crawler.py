@@ -148,7 +148,13 @@ class BrowserCrawler:
             try:
                 req = getattr(response, "request", None)
                 headers = await _await(response.headers() if callable(getattr(response, "headers", None)) else getattr(response, "headers", {}))
-                body = await _await(response.body() if callable(getattr(response, "body", None)) else getattr(response, "body", None))
+                body_attr = getattr(response, "body", None)
+                body = await _await(body_attr() if callable(body_attr) else body_attr)
+                if body is None and hasattr(response, "json"):
+                    try:
+                        body = json.dumps(await _await(response.json()), ensure_ascii=False)
+                    except Exception:
+                        body = None
                 if isinstance(body, bytes): body = body.decode("utf-8", "replace")
                 meta = {"run_id": task.get("run_id"), "account_id": account_browser.account_id,
                         "page_type": task.get("task_type"), "url": getattr(response, "url", ""),

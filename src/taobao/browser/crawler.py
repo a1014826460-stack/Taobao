@@ -3,13 +3,14 @@ from __future__ import annotations
 import asyncio
 import inspect
 import json
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from typing import Any, Mapping
 from urllib.parse import quote_plus
 
 from .human_behavior import DelayPolicy, humanize_page
-from .accounts import parse_cookie_text
+from .accounts import parse_cookie_text, AccountRecord
 from .network_capture import build_network_record
 from .risk_control import classify_risk, RiskDecision
 
@@ -68,10 +69,9 @@ class BrowserCrawler:
         self._cookies_loaded: set[str] = set()
         # Register supplied accounts in repository when possible.
         for account in getattr(browser_pool, "accounts", {}).values():
-            try:
-                self.repository.upsert_account(account)
-            except Exception:
-                pass
+            if isinstance(account, Mapping):
+                account = AccountRecord(str(account.get("account_id")), str(account.get("cookie_source", "")), str(account.get("status", "active")), account.get("pause_reason"))
+            self.repository.upsert_account(account)
 
     async def run_keywords(self, keywords: list[str]) -> dict:
         run_id = self.repository.create_run("keywords", {"keywords": keywords, "platforms": self.config.platforms, "page_limit": self.config.page_limit})
@@ -167,6 +167,7 @@ class BrowserCrawler:
     async def _navigate_capture(self, task: Mapping[str, Any], account_browser, url: str) -> list[dict]:
         page = account_browser.page
         records: list[dict] = []
+        risk_reason: list[str] = []
         callbacks: list[Any] = []
         async def handle_response(response):
             try:
@@ -180,6 +181,9 @@ class BrowserCrawler:
                     except Exception:
                         body = None
                 if isinstance(body, bytes): body = body.decode("utf-8", "replace")
+                marker = classify_risk(str(getattr(response, "url", "")), "", body or "", getattr(response, "status", None))
+                if marker and not risk_reason:
+                    risk_reason.append(marker)
                 meta = {"run_id": task.get("run_id"), "account_id": account_browser.account_id,
                         "page_type": task.get("task_type"), "url": getattr(response, "url", ""),
                         "method": getattr(req, "method", "GET"), "status_code": getattr(response, "status", None),
@@ -206,6 +210,8 @@ class BrowserCrawler:
             await humanize_page(page, self.config.delay_policy)
             if self._capture_tasks:
                 await asyncio.gather(*self._capture_tasks, return_exceptions=True); self._capture_tasks.clear()
+            if risk_reason:
+                raise _RiskDetected(risk_reason[0])
             marker = await self._page_risk(page)
             if marker and RiskDecision.should_pause(marker):
                 raise _RiskDetected(marker)
@@ -238,9 +244,13 @@ class BrowserCrawler:
         if kind == "search" or task.get("task_type") == "keyword":
             for d in dicts:
                 iid = _item_id(d)
+                if not iid:
+                    u = _first(d, "url", "itemurl", "detailurl")
+                    m = re.search(r"[?&]id=([0-9]+)", str(u or ""))
+                    iid = m.group(1) if m else None
+                # Item identifiers or detail URLs are sufficient; optional fields may be NULL.
+                if not iid and not _first(d, "url", "itemurl", "detailurl"): continue
                 if not iid: continue
-                # Avoid treating a bare detail object as a search result.
-                if not any(k in {str(x).lower() for x in d} for k in ("title", "price", "sales", "shop", "shopname", "rawtitle")): continue
                 self.repository.upsert_search_product({"platform": platform, "keyword": keyword, "page_no": page_no, "item_id": iid,
                     "title": _first(d,"title","raw_title","name"), "price": _first(d,"price","viewprice"), "sales": _first(d,"sales","sold"),
                     "shop": _first(d,"shop","shopname","sellername"), "url": _first(d,"url","itemurl","detailurl"), "raw_json": d})

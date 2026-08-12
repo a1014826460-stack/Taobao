@@ -11,3 +11,10 @@
 ## Concerns
 
 Camoufox is imported lazily, so environments without the optional package receive a clear runtime error. The production factory supports Camoufox async context-manager launch; crawler code should parse each account's cookie source and call `AccountBrowser.install_cookies` before navigation.
+
+## Follow-up resource cleanup
+
+- start_account now closes browser/context (and Camoufox manager) on context/page initialization failures and leaves no partial instance.
+- Added failure-path tests (	ests/test_taobao_browser_pool_failure.py).
+- Verification: 4 focused tests passed.
+

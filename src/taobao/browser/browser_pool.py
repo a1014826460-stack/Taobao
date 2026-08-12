@@ -73,8 +73,8 @@ class AccountBrowser:
 class BrowserPool:
     """Manage one isolated browser/context for each account.
 
-    ``browser_factory`` is injectable for tests and should accept ``headless``,
-    optional ``proxy`` and ``locale`` keyword arguments, returning a browser
+    ``browser_factory`` is injectable for tests and should accept ``headless``
+    and optional ``proxy`` keyword arguments, returning a browser
     object exposing ``new_context``.
     """
 
@@ -100,9 +100,17 @@ class BrowserPool:
         if self.proxy is not None:
             launch_kwargs["proxy"] = self.proxy
         browser = await _maybe_await(self.browser_factory(**launch_kwargs))
-        context_kwargs = {"locale": self.locale}
-        context = await _maybe_await(browser.new_context(**context_kwargs))
-        page = await _maybe_await(context.new_page())
+        context = None
+        try:
+            context_kwargs = {"locale": self.locale}
+            context = await _maybe_await(browser.new_context(**context_kwargs))
+            page = await _maybe_await(context.new_page())
+        except Exception:
+            # Never leak a launched browser/context when initialization fails.
+            # AccountBrowser.close() tolerates a missing context and also exits
+            # Camoufox's async manager, if the factory attached one.
+            await AccountBrowser(account_id, browser, context, None).close()
+            raise
         account_browser = AccountBrowser(account_id, browser, context, page)
         self.instances[account_id] = account_browser
         return account_browser

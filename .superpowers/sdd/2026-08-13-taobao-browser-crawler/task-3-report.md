@@ -25,3 +25,8 @@ Addressed review findings:
 - Added regression tests for non-JSON, metadata, and oversized body leakage.
 
 Verification: `PYTHONPATH=src pytest tests/test_taobao_browser_network.py -q` => 7 passed.
+
+Final regex leak fix:
+- Non-JSON secret values now consume through query delimiters (`&`, `;`, newline) or complete quoted values, preventing multi-token leakage.
+- Added regression test for unquoted and quoted multi-word secrets.
+- Verification: 8 focused tests passed.

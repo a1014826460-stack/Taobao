@@ -86,7 +86,7 @@ def build_network_record(meta: dict, body: str | None) -> dict:
         # Redact common secret query/header fragments before truncating.
         secret_pattern = re.compile(
             r'(?i)((?:x[-_]?token|set[-_]?cookie|authorization|signature|token|sign|cookie)\s*[=:]\s*)'
-            r'([^&\s;]+(?:\s+[^&\s;]+)?)'
+            r'(?:"[^"\r\n]*"|\'[^\'\r\n]*\'|[^&;\r\n]*)'
         )
         redacted_raw = secret_pattern.sub(r'\1[REDACTED]', raw)
         rec['body'] = redacted_raw[:_MAX_BODY]

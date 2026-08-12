@@ -41,3 +41,11 @@ def test_oversized_body_redacted_before_truncation():
     rec=build_network_record({'url':'https://x.test'}, body)
     assert secret not in rec['body']
     assert len(rec['body']) <= 2*1024*1024
+from taobao.browser.network_capture import build_network_record
+
+def test_non_json_multitoken_and_quoted_secret_redaction():
+    body='token=ONE TWO THREE&ok=1\nsign="A B C";next=yes'
+    rec=build_network_record({'url':'https://x.test'}, body)
+    for secret in ('ONE','TWO','THREE','A B C'): assert secret not in rec['body']
+    assert 'ok=1' in rec['body'] and 'next=yes' in rec['body']
+

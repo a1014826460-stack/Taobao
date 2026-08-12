@@ -24,3 +24,9 @@ Status: complete
 - Sparse search payloads with item IDs or detail URLs are persisted and create detail tasks; optional fields remain NULL.
 - Account pool mapping records are normalized to AccountRecord during registration.
 - Focused tests: `pytest -q tests/test_taobao_browser_crawler.py tests/test_taobao_browser_repository.py` (6 passed).
+
+Edge fixes:
+- Status risk classification now runs before headers/body access, preserving pause behavior when challenge bodies are denied.
+- URL-only search products support query/path identifiers and deterministic hash IDs for opaque URLs.
+- Added regression tests for denied 403 bodies and URL-only items.
+- Crawler tests: 4 passed.

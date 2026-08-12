@@ -14,7 +14,7 @@ def test_invalid_delay():
  a=build_arg_parser().parse_args(["--keyword","x","--min-delay","3","--max-delay","1"])
  with pytest.raises(ValueError): config_from_args(a)
 
-def test_empty_mode_rejected():
+def test_empty_mode_allowed_for_help():`n a=build_arg_parser().parse_args([]); assert a.keyword==[]`n
  p=build_arg_parser()
  with pytest.raises(SystemExit): p.parse_args([])
 

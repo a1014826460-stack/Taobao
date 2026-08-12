@@ -78,3 +78,24 @@ async def test_url_only_item_generates_detail(tmp_path):
     c=BrowserCrawler(repo, Pool(page), CrawlerConfig(platforms=('taobao',), page_limit=1, delay_policy=DelayPolicy(0,0)))
     await c.run_keywords(['x'])
     assert repo.conn.execute('select count(*) from crawl_tasks where task_type="detail"').fetchone()[0]==1
+
+
+@pytest.mark.asyncio
+async def test_running_tasks_recovered_before_claim(tmp_path):
+ repo=BrowserCrawlerRepository(tmp_path/'db.sqlite'); repo.upsert_account(AccountRecord('a','x')); ids=repo.enqueue_keyword('x','taobao',1); repo.conn.execute("update crawl_tasks set status='running'")
+ page=Page({})
+ c=BrowserCrawler(repo, Pool(page), CrawlerConfig(platforms=('taobao',), page_limit=1, delay_policy=DelayPolicy(0,0)))
+ await c.run_pending_tasks(); assert repo.conn.execute('select status from crawl_tasks').fetchone()['status'] in ('success','failed','pending')
+
+@pytest.mark.asyncio
+async def test_search_only_keeps_detail_pending(tmp_path):
+ repo=BrowserCrawlerRepository(tmp_path/'db.sqlite'); repo.upsert_account(AccountRecord('a','x')); repo.enqueue_detail('taobao','1')
+ c=BrowserCrawler(repo, Pool(Page({})), CrawlerConfig(search_only=True, delay_policy=DelayPolicy(0,0)))
+ await c.run_pending_tasks(); assert repo.conn.execute("select status from crawl_tasks where task_type='detail'").fetchone()['status']=='pending'
+
+@pytest.mark.asyncio
+async def test_search_ignores_nested_bogus_ids(tmp_path):
+ repo=BrowserCrawlerRepository(tmp_path/'db.sqlite'); repo.upsert_account(AccountRecord('a','x'))
+ url='https://s.taobao.com/search?q=x&page=1'; payload={'items':[{'itemId':'1','title':'A'}], 'metadata': {'id':'999','title':'bogus'}}
+ c=BrowserCrawler(repo, Pool(Page({url:[Resp(url,payload)]})), CrawlerConfig(platforms=('taobao',), page_limit=1, delay_policy=DelayPolicy(0,0)))
+ await c.run_keywords(['x']); rows=repo.conn.execute('select item_id from search_products').fetchall(); assert [r['item_id'] for r in rows]==['1']

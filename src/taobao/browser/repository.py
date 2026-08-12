@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS seller_infos (platform TEXT NOT NULL, item_id TEXT NO
         except Exception:
             self.conn.rollback(); raise
     def complete_task(self,task_id): self.conn.execute('UPDATE crawl_tasks SET status="success",error=NULL,updated_at=? WHERE task_id=?',(_now(),task_id))
+    def defer_task(self,task_id,reason=None): self.conn.execute("UPDATE crawl_tasks SET status='pending',account_id=NULL,error=?,updated_at=? WHERE task_id=?",(reason,_now(),task_id))
     def fail_task(self,task_id,error,retry_at=None):
         status = "pending" if retry_at is not None else "failed"
         self.conn.execute("UPDATE crawl_tasks SET status=?,error=?,next_run_at=?,updated_at=? WHERE task_id=?",(status,error,retry_at,_now(),task_id))
@@ -101,13 +102,19 @@ CREATE TABLE IF NOT EXISTS seller_infos (platform TEXT NOT NULL, item_id TEXT NO
             try: h=json.loads(h)
             except Exception: h={}
         h={k:('<redacted>' if re.search(r'cookie|authorization|token|set-cookie',k,re.I) else v) for k,v in h.items()} if isinstance(h,dict) else None
+        _secret_pattern = re.compile(r'(?i)((?:x[-_]?token|set[-_]?cookie|authorization|signature|token|sign|cookie)\s*[=:]\s*)(?:"[^"\r\n]*"|\'[^\'\r\n]*\'|[^&;\r\n]*)')
         def scrub(v):
             if isinstance(v,dict): return {k:('<redacted>' if re.search(r'cookie|set.cookie|authorization|token|sign',k,re.I) else scrub(x)) for k,x in v.items()}
             if isinstance(v,list): return [scrub(x) for x in v]
+            if isinstance(v,str):
+                v = re.sub(r'([?&](?:token|sign|signature|auth)=[^&\s]+)', r'\1<redacted>', v, flags=re.I)
+                return _secret_pattern.sub(r'\1<redacted>', v)
             return v
         body=r.get('response_body',None);
-        try: body = None if body is None else (_json(scrub(json.loads(body))) if isinstance(body,str) else _json(scrub(body)))
-        except Exception: body=body
+        try:
+            body = None if body is None else (_json(scrub(json.loads(body))) if isinstance(body,str) else _json(scrub(body)))
+        except Exception:
+            body = scrub(body)
         self.conn.execute('''INSERT INTO network_records(record_id,run_id,account_id,page_type,url,method,status_code,resource_type,response_headers_json,response_body,body_sha256,captured_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(record_id) DO UPDATE SET run_id=COALESCE(excluded.run_id,network_records.run_id),account_id=COALESCE(excluded.account_id,network_records.account_id),page_type=COALESCE(excluded.page_type,network_records.page_type),url=COALESCE(excluded.url,network_records.url),method=COALESCE(excluded.method,network_records.method),status_code=COALESCE(excluded.status_code,network_records.status_code),resource_type=COALESCE(excluded.resource_type,network_records.resource_type),response_headers_json=COALESCE(excluded.response_headers_json,network_records.response_headers_json),response_body=COALESCE(excluded.response_body,network_records.response_body),body_sha256=COALESCE(excluded.body_sha256,network_records.body_sha256),captured_at=COALESCE(excluded.captured_at,network_records.captured_at)''',(rid,r.get('run_id'),r.get('account_id'),r.get('page_type'),url,r.get('method'),r.get('status_code'),r.get('resource_type'),(_json(h) if h is not None else None),(body if body is not None else None),r.get('body_sha256'),r.get('captured_at') or _now()))
     def upsert_search_product(self,r):
         self.conn.execute('''INSERT INTO search_products(platform,keyword,page_no,item_id,title,price,sales,shop,url,raw_json,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(platform,keyword,page_no,item_id) DO UPDATE SET title=excluded.title,price=excluded.price,sales=excluded.sales,shop=excluded.shop,url=excluded.url,raw_json=excluded.raw_json,updated_at=excluded.updated_at''',(r['platform'],r['keyword'],r['page_no'],r['item_id'],r.get('title'),r.get('price'),r.get('sales'),r.get('shop'),r.get('url'),_json(r.get('raw_json',r)),_now()))

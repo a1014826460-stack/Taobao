@@ -84,6 +84,8 @@ class BrowserCrawler:
         return summary
 
     async def run_pending_tasks(self) -> dict:
+        # Requeue tasks left running by a crashed/interrupted process before claiming.
+        self.repository.recover_running_tasks()
         completed = failed = paused = 0
         # Round-robin available account IDs; stop when no runnable task remains.
         account_ids = [str(a.get("account_id")) for a in self.repository.available_accounts()]
@@ -104,9 +106,10 @@ class BrowserCrawler:
                     if task.get("task_type") == "keyword":
                         await self.crawl_search_page(task, browser)
                     elif self.config.search_only:
-                        self.repository.complete_task(task["task_id"])
-                        completed += 1
-                        continue
+                        # Keep detail seeds pending so a later normal run can process them.
+                        self.repository.defer_task(task["task_id"], "deferred by search_only")
+                        progressed = False
+                        break
                     else:
                         await self.crawl_detail(task, browser)
                     self.repository.complete_task(task["task_id"])
@@ -248,13 +251,42 @@ class BrowserCrawler:
     async def crawl_detail(self, task, account_browser) -> None:
         await self._navigate_capture(task, account_browser, self._detail_url(task))
 
+    def _search_dicts(self, payload: Any):
+        """Extract only dictionaries representing search items from recognized arrays/wrappers."""
+        item_keys = {"items", "itemlist", "results", "result", "goods", "products", "list"}
+        wrapper_keys = {"data", "page", "search", "payload", "response", "result"}
+        out = []
+        def visit(v, depth=0):
+            if depth > 3: return
+            if isinstance(v, list):
+                for x in v:
+                    if isinstance(x, dict) and (_item_id(x) or _first(x, "url", "itemurl", "detailurl")):
+                        out.append(x)
+                return
+            if not isinstance(v, dict): return
+            for k, child in v.items():
+                lk = str(k).lower()
+                if lk in item_keys and isinstance(child, list):
+                    visit(child, depth + 1)
+                elif lk in wrapper_keys and isinstance(child, (dict, list)):
+                    visit(child, depth + 1)
+            if not out and depth == 0 and _item_id(v) and any(_first(v, key) for key in ("title", "name", "price", "url", "itemurl", "detailurl")):
+                out.append(v)
+        visit(payload)
+        # de-duplicate by object identity while preserving order
+        seen = set(); unique = []
+        for d in out:
+            marker = id(d)
+            if marker not in seen: seen.add(marker); unique.append(d)
+        return unique
+
     def _persist_payload(self, task: Mapping[str, Any], payload: Any, kind: str | None):
         platform = task.get("platform", "taobao"); keyword = task.get("keyword") or ""; page_no = int(task.get("page_no") or 1)
         item_task = task.get("item_id")
         # Search records: accept top-level or nested item arrays.
         dicts = list(_walk(payload))
         if kind == "search" or task.get("task_type") == "keyword":
-            for d in dicts:
+            for d in self._search_dicts(payload):
                 iid = _item_id(d)
                 if not iid:
                     u = _first(d, "url", "itemurl", "detailurl")

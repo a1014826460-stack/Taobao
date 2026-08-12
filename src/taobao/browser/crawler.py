@@ -4,6 +4,7 @@ import asyncio
 import inspect
 import json
 import re
+import hashlib
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from typing import Any, Mapping
@@ -172,6 +173,13 @@ class BrowserCrawler:
         async def handle_response(response):
             try:
                 req = getattr(response, "request", None)
+                response_url = str(getattr(response, "url", ""))
+                status_code = getattr(response, "status", None)
+                # Classify status risk before touching headers/body: challenge
+                # responses may deny body access, but must still pause account.
+                marker = classify_risk(response_url, "", "", status_code)
+                if marker and not risk_reason:
+                    risk_reason.append(marker)
                 headers = await _await(response.headers() if callable(getattr(response, "headers", None)) else getattr(response, "headers", {}))
                 body_attr = getattr(response, "body", None)
                 body = await _await(body_attr() if callable(body_attr) else body_attr)
@@ -181,7 +189,7 @@ class BrowserCrawler:
                     except Exception:
                         body = None
                 if isinstance(body, bytes): body = body.decode("utf-8", "replace")
-                marker = classify_risk(str(getattr(response, "url", "")), "", body or "", getattr(response, "status", None))
+                marker = classify_risk(response_url, "", body or "", status_code)
                 if marker and not risk_reason:
                     risk_reason.append(marker)
                 meta = {"run_id": task.get("run_id"), "account_id": account_browser.account_id,
@@ -246,8 +254,9 @@ class BrowserCrawler:
                 iid = _item_id(d)
                 if not iid:
                     u = _first(d, "url", "itemurl", "detailurl")
-                    m = re.search(r"[?&]id=([0-9]+)", str(u or ""))
-                    iid = m.group(1) if m else None
+                    us = str(u or "")
+                    m = re.search(r"(?:[?&]id=|/item/)([A-Za-z0-9_-]+)", us)
+                    iid = m.group(1) if m else ("url_" + hashlib.sha256(us.encode()).hexdigest()[:16] if us else None)
                 # Item identifiers or detail URLs are sufficient; optional fields may be NULL.
                 if not iid and not _first(d, "url", "itemurl", "detailurl"): continue
                 if not iid: continue

@@ -59,3 +59,22 @@ async def test_risk_pauses_account_and_requeues(tmp_path):
     out=await c.run_pending_tasks(); assert out['paused_accounts']==1
     row=repo.conn.execute('select status from crawl_tasks').fetchone(); assert row['status']=='pending'
     assert repo.available_accounts()==[]
+
+@pytest.mark.asyncio
+async def test_status_risk_detected_when_body_denied(tmp_path):
+    repo=BrowserCrawlerRepository(tmp_path/'db.sqlite'); repo.upsert_account(AccountRecord('a','x')); repo.enqueue_keyword('x','taobao',1)
+    class Denied(Resp):
+        async def body(self): raise RuntimeError('denied')
+    url='https://s.taobao.com/search?q=x&page=1'
+    page=Page({url:[Denied(url, {}, status=403)]})
+    c=BrowserCrawler(repo, Pool(page), CrawlerConfig(platforms=('taobao',), page_limit=1, delay_policy=DelayPolicy(0,0)))
+    out=await c.run_pending_tasks(); assert out['paused_accounts']==1
+
+@pytest.mark.asyncio
+async def test_url_only_item_generates_detail(tmp_path):
+    repo=BrowserCrawlerRepository(tmp_path/'db.sqlite'); repo.upsert_account(AccountRecord('a','x'))
+    url='https://s.taobao.com/search?q=x&page=1'; detail_url='https://item.taobao.com/item/abc'
+    page=Page({url:[Resp(url, {'items':[{'url':detail_url}]})]})
+    c=BrowserCrawler(repo, Pool(page), CrawlerConfig(platforms=('taobao',), page_limit=1, delay_policy=DelayPolicy(0,0)))
+    await c.run_keywords(['x'])
+    assert repo.conn.execute('select count(*) from crawl_tasks where task_type="detail"').fetchone()[0]==1

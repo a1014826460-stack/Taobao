@@ -69,20 +69,27 @@ def classify_json(url: str, resource_type: str, payload: Any) -> str:
 
 
 def build_network_record(meta: dict, body: str | None) -> dict:
-    rec = dict(meta or {})
+    # Recursively redact metadata before copying/persisting it.
+    rec = _redact_obj(dict(meta or {}))
     rec['url'] = redact_url(str(rec.get('url','')))
     if isinstance(rec.get('headers'), Mapping): rec['headers'] = redact_headers(rec['headers'])
     raw = body or ''
-    if len(raw) > _MAX_BODY: raw = raw[:_MAX_BODY]
-    payload = try_parse_json(raw, rec.get('content_type') or rec.get('mime_type'))
+    # Parse JSON only after bounding input; non-JSON is redacted below.
+    candidate = raw[:_MAX_BODY] if len(raw) <= _MAX_BODY else raw
+    payload = try_parse_json(candidate, rec.get('content_type') or rec.get('mime_type'))
     if payload is not None:
         clean = _redact_obj(payload)
-        rec['body'] = json.dumps(clean, ensure_ascii=False, separators=(',', ':'))
+        rec['body'] = json.dumps(clean, ensure_ascii=False, separators=(',', ':'))[:_MAX_BODY]
         rec['json_payload'] = clean
         rec['json_type'] = classify_json(rec['url'], str(rec.get('resource_type','')), clean)
     else:
-        # Redact common secret query-like fragments in non-JSON bodies too.
-        rec['body'] = re.sub(r'(?i)((?:token|sign|authorization|cookie)=)[^&\\s]+', r'\1[REDACTED]', raw)
+        # Redact common secret query/header fragments before truncating.
+        secret_pattern = re.compile(
+            r'(?i)((?:x[-_]?token|set[-_]?cookie|authorization|signature|token|sign|cookie)\s*[=:]\s*)'
+            r'([^&\s;]+(?:\s+[^&\s;]+)?)'
+        )
+        redacted_raw = secret_pattern.sub(r'\1[REDACTED]', raw)
+        rec['body'] = redacted_raw[:_MAX_BODY]
         rec['json_payload'] = None
         rec['json_type'] = 'unknown_json'
     return rec

@@ -19,3 +19,8 @@ Status: complete
 ## Concerns / follow-up
 - Real Camoufox/Playwright startup and site-specific payload schemas require manual verification; tests use local fake page/response fixtures and never access Taobao.
 - Payload normalization is intentionally heuristic to accommodate changing endpoint shapes; unknown JSON is still retained in `network_records`.
+## Follow-up fixes
+- Response status risk markers now pause account/requeue task for 401/403/429 and challenge markers.
+- Sparse search payloads with item IDs or detail URLs are persisted and create detail tasks; optional fields remain NULL.
+- Account pool mapping records are normalized to AccountRecord during registration.
+- Focused tests: `pytest -q tests/test_taobao_browser_crawler.py tests/test_taobao_browser_repository.py` (6 passed).

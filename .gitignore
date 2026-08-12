@@ -37,3 +37,4 @@ frontend/dist/
 *.tsbuildinfo
 node_modules/
 images/
+.worktrees/

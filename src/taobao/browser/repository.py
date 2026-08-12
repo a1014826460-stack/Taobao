@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS seller_infos (platform TEXT NOT NULL, item_id TEXT NO
         try:
             self.conn.execute('ALTER TABLE crawl_tasks RENAME TO crawl_tasks_old')
             self.conn.execute('''CREATE TABLE crawl_tasks (task_id TEXT PRIMARY KEY, task_type TEXT NOT NULL CHECK(task_type IN ('keyword','detail')), keyword TEXT, item_id TEXT, platform TEXT, page_no INTEGER, source_url TEXT, status TEXT NOT NULL DEFAULT 'pending', account_id TEXT, attempts INTEGER NOT NULL DEFAULT 0, error TEXT, next_run_at TEXT, run_id TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY(account_id) REFERENCES accounts(account_id), FOREIGN KEY(run_id) REFERENCES crawl_runs(run_id), UNIQUE(task_type,platform,keyword,page_no), UNIQUE(task_type,platform,item_id))''')
-            self.conn.execute('''INSERT INTO crawl_tasks SELECT task_id,task_type,keyword,item_id,COALESCE(platform,'taobao'),page_no,source_url,status,account_id,attempts,error,next_run_at,run_id,created_at,updated_at FROM crawl_tasks_old''')
+            self.conn.execute('''INSERT INTO crawl_tasks SELECT task_id,task_type,keyword,item_id,COALESCE(platform,'taobao'),page_no,source_url,status,account_id,attempts,error,next_run_at,run_id,created_at,updated_at FROM crawl_tasks_old o WHERE task_type='keyword' OR rowid IN (SELECT MIN(rowid) FROM crawl_tasks_old d WHERE d.task_type='detail' GROUP BY d.platform,d.item_id)''')
             self.conn.execute('DROP TABLE crawl_tasks_old'); self.conn.execute('CREATE INDEX IF NOT EXISTS idx_tasks_status_next ON crawl_tasks(status,next_run_at)'); self.conn.execute('CREATE INDEX IF NOT EXISTS idx_tasks_account ON crawl_tasks(account_id,status)'); self.conn.commit()
         except Exception:
             self.conn.rollback(); raise
@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS seller_infos (platform TEXT NOT NULL, item_id TEXT NO
         cur=self.conn.execute("UPDATE crawl_tasks SET status='pending',account_id=NULL,updated_at=? WHERE status='running'",(_now(),)); return cur.rowcount
     def save_network_record(self,record):
         r=dict(record); rid=r.get('record_id') or str(uuid.uuid4()); url=r.get('url'); url=re.sub(r'([?&](?:token|sign))=[^&]*',r'\1=<redacted>',url,flags=re.I) if url is not None else None
-        h=r.get('response_headers',r.get('response_headers_json',{}));
+        h=r.get('response_headers',r.get('response_headers_json',None));
         if isinstance(h,str):
             try: h=json.loads(h)
             except Exception: h={}
@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS seller_infos (platform TEXT NOT NULL, item_id TEXT NO
             if isinstance(v,dict): return {k:('<redacted>' if re.search(r'cookie|set.cookie|authorization|token|sign',k,re.I) else scrub(x)) for k,x in v.items()}
             if isinstance(v,list): return [scrub(x) for x in v]
             return v
-        body=r.get('response_body');
+        body=r.get('response_body',None);
         try: body=_json(scrub(json.loads(body))) if isinstance(body,str) else _json(scrub(body))
         except Exception: body=body
         self.conn.execute('''INSERT INTO network_records(record_id,run_id,account_id,page_type,url,method,status_code,resource_type,response_headers_json,response_body,body_sha256,captured_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(record_id) DO UPDATE SET run_id=COALESCE(excluded.run_id,network_records.run_id),account_id=COALESCE(excluded.account_id,network_records.account_id),page_type=COALESCE(excluded.page_type,network_records.page_type),url=COALESCE(excluded.url,network_records.url),method=COALESCE(excluded.method,network_records.method),status_code=COALESCE(excluded.status_code,network_records.status_code),resource_type=COALESCE(excluded.resource_type,network_records.resource_type),response_headers_json=COALESCE(excluded.response_headers_json,network_records.response_headers_json),response_body=COALESCE(excluded.response_body,network_records.response_body),body_sha256=COALESCE(excluded.body_sha256,network_records.body_sha256),captured_at=COALESCE(excluded.captured_at,network_records.captured_at)''',(rid,r.get('run_id'),r.get('account_id'),r.get('page_type'),url,r.get('method'),r.get('status_code'),r.get('resource_type'),_json(h),body,r.get('body_sha256'),r.get('captured_at') or _now()))

@@ -1,0 +1,7 @@
+# Task 4 report
+
+- Status: complete
+- Commit: 15e0e6a (`feat: add humanized pacing and risk detection`)
+- Tests: `PYTHONPATH=src pytest tests/test_taobao_browser_behavior.py -q` (5 passed)
+- Implemented: seeded `DelayPolicy` (10-30s defaults, validation, injectable sleep), viewport-bounded mouse movement, conditional 1-4 scrolling only for tall pages, and risk classification (`login_expired`, `challenge`, `rate_limited`, `forbidden`).
+- Concerns: callers should provide `DelayPolicy.sleep_func` no-op in unit tests; production defaults use `asyncio.sleep`.

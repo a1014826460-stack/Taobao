@@ -1,4 +1,4 @@
-import asyncio, random
+import asyncio, random, math
 from dataclasses import dataclass
 from typing import Callable
 
@@ -67,7 +67,11 @@ async def humanize_page(page, policy: DelayPolicy, rng=None) -> None:
         total_height = None
     if total_height is None:
         return
-    if float(total_height) <= height * 1.15:
+    try:
+        total_height = float(total_height)
+    except (TypeError, ValueError):
+        return
+    if not math.isfinite(total_height) or total_height <= height * 1.15:
         return
     if mouse is None or not hasattr(mouse, "wheel"):
         return

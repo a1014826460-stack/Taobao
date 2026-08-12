@@ -46,12 +46,17 @@ CREATE TABLE IF NOT EXISTS seller_infos (platform TEXT NOT NULL, item_id TEXT NO
             self.conn.rollback(); raise
     def available_accounts(self): return [dict(r) for r in self.conn.execute("SELECT * FROM accounts WHERE status IN ('active','available') ORDER BY COALESCE(last_used_at,'')").fetchall()]
     def enqueue_keyword(self,keyword,platform,page_limit=3,run_id=None):
+        if isinstance(page_limit,bool) or not isinstance(page_limit,int) or not 1 <= page_limit <= 3: raise ValueError('page_limit must be integer 1..3')
         ids=[]
-        for p in range(1,page_limit+1):
-            tid=str(uuid.uuid4()); t=_now()
-            self.conn.execute('''INSERT INTO crawl_tasks(task_id,task_type,keyword,platform,page_no,status,next_run_at,run_id,created_at,updated_at) VALUES(?,?,?,?,?,"pending",?,?,?,?) ON CONFLICT(task_type,platform,keyword,page_no) DO UPDATE SET run_id=COALESCE(excluded.run_id,crawl_tasks.run_id),updated_at=excluded.updated_at''',(tid,'keyword',keyword,platform,p,t,run_id,t,t))
-            row=self.conn.execute("SELECT task_id FROM crawl_tasks WHERE task_type='keyword' AND platform=? AND keyword=? AND page_no=?",(platform,keyword,p)).fetchone(); ids.append(row['task_id'])
-        return ids
+        self.conn.execute('BEGIN IMMEDIATE')
+        try:
+            for p in range(1,page_limit+1):
+                tid=str(uuid.uuid4()); t=_now()
+                self.conn.execute('''INSERT INTO crawl_tasks(task_id,task_type,keyword,platform,page_no,status,next_run_at,run_id,created_at,updated_at) VALUES(?,?,?,?,?,"pending",?,?,?,?) ON CONFLICT(task_type,platform,keyword,page_no) DO UPDATE SET run_id=COALESCE(excluded.run_id,crawl_tasks.run_id),updated_at=excluded.updated_at''',(tid,'keyword',keyword,platform,p,t,run_id,t,t))
+                row=self.conn.execute("SELECT task_id FROM crawl_tasks WHERE task_type='keyword' AND platform=? AND keyword=? AND page_no=?",(platform,keyword,p)).fetchone(); ids.append(row['task_id'])
+            self.conn.commit(); return ids
+        except Exception:
+            self.conn.rollback(); raise
     def enqueue_detail(self,platform,item_id,source_url=None,run_id=None):
         tid=str(uuid.uuid4()); t=_now(); self.conn.execute('''INSERT INTO crawl_tasks(task_id,task_type,item_id,platform,source_url,status,next_run_at,run_id,created_at,updated_at) VALUES(?,?, ?,?,?,"pending",?,?,?,?) ON CONFLICT(task_type,platform,item_id) DO UPDATE SET source_url=COALESCE(excluded.source_url,crawl_tasks.source_url),run_id=COALESCE(excluded.run_id,crawl_tasks.run_id),updated_at=excluded.updated_at''',(tid,'detail',item_id,platform,source_url,t,run_id,t,t)); return self.conn.execute("SELECT task_id FROM crawl_tasks WHERE task_type='detail' AND platform=? AND item_id=?",(platform,item_id)).fetchone()['task_id']
     def claim_next_task(self,account_id,now):

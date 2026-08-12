@@ -95,3 +95,74 @@ python -m src.jd.direct.search `
 
 Supported JD `sort` values are `bid`, `_bid`, `_sale`, `_review`, and `_new`.
 `bid` means total price, `sale` means sales, `review` means review count, and `new` means new products; adding the `_` prefix means descending order. Results are stored in `data/jd_search.sqlite3` with raw pages, normalized items, and resumable page state.
+
+## Taobao/Tmall Browser Capture Crawler
+
+The browser crawler uses one isolated Camoufox context per account and stores
+captured JSON in a separate SQLite database (default:
+`data/taobao_browser_crawler.db`). It supports both repeatable command-line
+keywords and tasks already queued in the database. Browsers are visible by
+default; add `--headless` for unattended runs.
+
+### Accounts and cookies
+
+Pass one account with `--cookie-file`, or a directory containing one cookie
+file per account with `--cookie-dir`:
+
+```text
+cookies/accounts/
+  alice.txt
+  bob.json
+```
+
+Cookie files may be semicolon, Netscape, or JSON (`[...]` or
+`{"cookies": [...]}`) format. File stems become stable account IDs. Cookie
+values are injected only into that account's browser context and are redacted
+before network metadata or raw payloads are persisted; do not commit cookie
+files.
+
+### CLI examples
+
+Capture up to three pages per keyword for both Taobao and Tmall, then process
+the discovered detail tasks:
+
+```powershell
+$env:PYTHONPATH = "src"
+python -m taobao.browser.cli `
+  --keyword '手机' --keyword '耳机' `
+  --cookie-dir cookies/accounts `
+  --db data/taobao_browser_crawler.db
+```
+
+Use a single test account, capture search pages only, or run queued tasks:
+
+```powershell
+python -m taobao.browser.cli --keyword '手机' --cookie-file cookies.txt --search-only
+python -m taobao.browser.cli --from-tasks --cookie-dir cookies/accounts --headless
+```
+
+`--pages` is limited to 1–3 (default 3), `--min-delay`/`--max-delay` default
+to 10–30 seconds, and `--retry-limit` bounds transient retries. Every page is
+allowed to load naturally and receives bounded stay/scroll/mouse actions.
+
+### Database and resume behavior
+
+The browser database contains `crawl_runs`, `accounts`, `crawl_tasks`,
+`network_records`, `search_products`, `product_details`, `product_comments`,
+and `seller_infos`. It preserves redacted raw JSON for later parsing and uses
+unique keys for keyword/page and platform/item records, so reruns are
+idempotent. A crashed run requeues tasks left in `running`; successful tasks
+are skipped.
+
+If a login expiry, challenge, rate limit, or forbidden response is detected,
+only the affected account is marked `paused`, its in-flight task is requeued,
+and other accounts continue. Resume after resolving the account issue by
+running `--from-tasks` with that account available again (or by clearing its
+pause state in the database under operator control). The CLI returns non-zero
+when work remains failed or paused.
+
+Automated tests use local response/page fixtures and never contact Taobao.
+Before a real-site run, manually verify the supplied account, requested
+keywords, pacing range, and risk handling in a visible browser; perform a
+small bounded smoke run first. Real-site verification is intentionally not
+part of the test suite.

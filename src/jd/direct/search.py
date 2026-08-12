@@ -23,6 +23,12 @@ from urllib.request import Request, urlopen
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 SEARCH_API_URL = "https://api-gw.fan-b.com/jd/item_search/"
+SEARCH_PRO_API_URL = "https://api-gw.fan-b.com/jd/item_search_pro/"
+SEARCH_API_URLS = {
+    "item_search": SEARCH_API_URL,
+    "item_search_pro": SEARCH_PRO_API_URL,
+}
+NORMAL_SEARCH_MAX_PAGE = 7
 
 
 def utc_now_iso() -> str:
@@ -42,6 +48,7 @@ class JDSearchCrawlerConfig:
     secret: str
     query: str
     db_path: str = "data/jd_search.sqlite3"
+    start_page: int = 1
     max_pages: int = 1
     max_workers: int = 4
     sort: str = "_sale"
@@ -105,8 +112,10 @@ def query_fingerprint(config: JDSearchCrawlerConfig) -> str:
 JD_SUPPORTED_SORTS = {"bid", "_bid", "_sale", "_review", "_new"}
 
 
-def build_search_request(config: JDSearchCrawlerConfig, page: int) -> Request:
+def build_search_request(config: JDSearchCrawlerConfig, page: int, api: str = "item_search") -> Request:
     """Build an authenticated item-search request for exactly one result page."""
+    if api not in SEARCH_API_URLS:
+        raise ValueError("api must be one of: item_search,item_search_pro")
     if config.sort and config.sort not in JD_SUPPORTED_SORTS:
         raise ValueError("sort must be one of: bid,_bid,_sale,_review,_new")
     params = {
@@ -129,7 +138,7 @@ def build_search_request(config: JDSearchCrawlerConfig, page: int) -> Request:
         "secret": config.secret,
     }
     return Request(
-        f"{SEARCH_API_URL}?{urlencode(params)}",
+        f"{SEARCH_API_URLS[api]}?{urlencode(params)}",
         headers={"User-Agent": "jd-item-search-crawler/1.0"},
     )
 
@@ -314,9 +323,9 @@ class SQLiteJDSearchStore:
             )
 
 
-def fetch_search_page(config: JDSearchCrawlerConfig, page: int, opener=urlopen) -> dict[str, Any]:
+def fetch_search_page(config: JDSearchCrawlerConfig, page: int, opener=urlopen, api: str = "item_search") -> dict[str, Any]:
     """Request one page and retry both transport failures and API error envelopes."""
-    request = build_search_request(config, page)
+    request = build_search_request(config, page, api=api)
     last_error: Exception | None = None
     for attempt in range(1, int(config.retries) + 1):
         try:
@@ -331,6 +340,21 @@ def fetch_search_page(config: JDSearchCrawlerConfig, page: int, opener=urlopen) 
     raise RuntimeError(f"request failed after {config.retries} attempt(s): {last_error}")
 
 
+def fetch_search_page_with_fallback(config: JDSearchCrawlerConfig, page: int, opener=urlopen) -> dict[str, Any]:
+    """Fetch a JD search page with item_search, then item_search_pro if normal search fails."""
+    try:
+        return fetch_search_page(config, page, opener=opener, api="item_search")
+    except Exception:
+        return fetch_search_page(config, page, opener=opener, api="item_search_pro")
+
+
+def fetch_search_page_for_page(config: JDSearchCrawlerConfig, page: int, opener=urlopen) -> dict[str, Any]:
+    """Use the normal API for pages 1..7 and the pro API from page 8 onward."""
+    if int(page) > NORMAL_SEARCH_MAX_PAGE:
+        return fetch_search_page(config, page, opener=opener, api="item_search_pro")
+    return fetch_search_page_with_fallback(config, page, opener=opener)
+
+
 def crawl_search(
     config: JDSearchCrawlerConfig,
     fetcher: Callable[[JDSearchCrawlerConfig, int], dict[str, Any]] | None = None,
@@ -340,6 +364,8 @@ def crawl_search(
         raise ValueError("query must not be empty")
     if config.max_pages <= 0:
         raise ValueError("max_pages must be a positive integer")
+    if config.start_page <= 0 or config.start_page > config.max_pages:
+        raise ValueError("start_page must be between 1 and max_pages")
     if config.max_workers <= 0:
         raise ValueError("max_workers must be a positive integer")
     if config.retries <= 0:
@@ -348,7 +374,7 @@ def crawl_search(
     fingerprint = query_fingerprint(config)
     store = SQLiteJDSearchStore(config.db_path)
     try:
-        pages = list(range(1, int(config.max_pages) + 1))
+        pages = list(range(int(config.start_page), int(config.max_pages) + 1))
         pending = pages if config.reset else [
             page for page in pages
             if (state := store.get_page_state(fingerprint, page)) is None or state["status"] != "success"
@@ -368,7 +394,7 @@ def crawl_search(
                     if wait > 0:
                         time.sleep(wait)
                     last_request = time.monotonic()
-                return fetch_search_page(crawler_config, page)
+                return fetch_search_page_for_page(crawler_config, page)
 
             active_fetcher = default_fetcher
         else:
@@ -414,6 +440,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Concurrent, resumable JD item_search crawler")
     parser.add_argument("--q", required=True, help="JD search keyword.")
     parser.add_argument("--max-pages", type=int, default=1, help="Pages 1 through this limit (default: 1).")
+    parser.add_argument("--start-page", type=int, default=1, help="First result page to request (default: 1).")
     parser.add_argument("--workers", type=int, default=4, help="Concurrent requests (default: 4).")
     parser.add_argument("--db", default="data/jd_search.sqlite3", help="SQLite database path.")
     parser.add_argument("--sort", default="_sale", help="JD search sort: bid,_bid,_sale,_review,_new (default: _sale).")
@@ -443,7 +470,7 @@ def config_from_args(args: argparse.Namespace) -> JDSearchCrawlerConfig:
     if not key or not secret:
         raise ValueError("API credentials must be set as FANB_API_KEY and FANB_API_SECRET")
     return JDSearchCrawlerConfig(
-        key=key, secret=secret, query=args.q, db_path=args.db, max_pages=args.max_pages,
+        key=key, secret=secret, query=args.q, db_path=args.db, start_page=args.start_page, max_pages=args.max_pages,
         max_workers=args.workers, sort=args.sort, start_price=args.start_price,
         end_price=args.end_price, cat=args.cat, discount_only=args.discount_only,
         page_size=args.page_size, seller_info=args.seller_info, nick=args.nick,

@@ -93,7 +93,7 @@ python -m src.jd.direct.search `
   --workers 4
 ```
 
-Supported JD `sort` values are `bid`, `_bid`, `_sale`, `_review`, and `_new`.
+<<Supported JD `sort` values are `bid`, `_bid`, `_sale`, `_review`, and `_new`.
 `bid` means total price, `sale` means sales, `review` means review count, and `new` means new products; adding the `_` prefix means descending order. Results are stored in `data/jd_search.sqlite3` with raw pages, normalized items, and resumable page state.
 
 ## Taobao/Tmall Browser Capture Crawler
@@ -165,4 +165,6 @@ Automated tests use local response/page fixtures and never contact Taobao.
 Before a real-site run, manually verify the supplied account, requested
 keywords, pacing range, and risk handling in a visible browser; perform a
 small bounded smoke run first. Real-site verification is intentionally not
-part of the test suite.
+part of the test suite.`r`nSupported JD `sort` values are `bid`, `_bid`, `_sale`, `_review`, `_new`, and an empty string for comprehensive order.
+`bid` means total price, `sale` means sales, `review` means review count, and `new` means new products; adding the `_` prefix means descending order. When `jd/item_search` fails after its configured retries, the crawler automatically retries that page through `jd/item_search_pro` with the same filters and sort value. Results are stored in `data/jd_search.sqlite3` with raw pages, normalized items, and resumable page state.
+

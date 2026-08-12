@@ -132,5 +132,57 @@ class GuoneiItemDetailUploadTests(unittest.TestCase):
             self.assertEqual([item["product_title"] for item in items], ["new"])
 
 
+    def test_load_detail_source_items_can_filter_by_new_source_created_at(self):
+        with tempfile.TemporaryDirectory() as directory:
+            db_path = Path(directory) / "items.sqlite3"
+            conn = sqlite3.connect(db_path)
+            conn.executescript(
+                """
+                CREATE TABLE item_detail_sources (keyword TEXT, sort TEXT, page INTEGER, num_iid TEXT, created_at TEXT, PRIMARY KEY (keyword, sort, page, num_iid));
+                CREATE TABLE item_details (num_iid TEXT PRIMARY KEY, title TEXT, price TEXT, orginal_price TEXT, nick TEXT, detail_url TEXT, pic_url TEXT, brand TEXT, cid TEXT, seller_id TEXT, shop_id TEXT, sales TEXT, raw_json TEXT NOT NULL, created_at TEXT, updated_at TEXT);
+                CREATE TABLE item_detail_state (num_iid TEXT PRIMARY KEY, status TEXT, last_error TEXT, created_at TEXT, updated_at TEXT);
+                """
+            )
+            raw = json.dumps({"item": {"num_iid": "100", "title": "one", "item_imgs": [{"url": "//img/1.jpg"}]}}, ensure_ascii=False)
+            conn.execute("INSERT INTO item_details VALUES ('100', 'one', '', '', '', '', '', '', '', '', '', '', ?, 'old', '2026-07-27T01:00:00+00:00')", (raw,))
+            conn.execute("INSERT INTO item_detail_state VALUES ('100', 'success', NULL, 'old', 'old')")
+            conn.execute("INSERT INTO item_detail_sources VALUES ('旧词', '', 1, '100', '2026-07-27T01:00:00+00:00')")
+            conn.execute("INSERT INTO item_detail_sources VALUES ('新词', 'bid', 1, '100', '2026-07-28T01:00:00+00:00')")
+            conn.commit(); conn.close()
+
+            items = uploader.load_detail_source_items(db_path, source_created_since="2026-07-28T00:00:00+00:00")
+
+            self.assertEqual([item["keyword"] for item in items], ["新词"])
+
+
+    def test_incremental_target_total_only_sends_rows_within_final_keyword_cap(self):
+        with tempfile.TemporaryDirectory() as directory:
+            db_path = Path(directory) / "items.sqlite3"
+            conn = sqlite3.connect(db_path)
+            conn.executescript(
+                """
+                CREATE TABLE item_detail_sources (keyword TEXT, sort TEXT, page INTEGER, num_iid TEXT, created_at TEXT, PRIMARY KEY (keyword, sort, page, num_iid));
+                CREATE TABLE item_details (num_iid TEXT PRIMARY KEY, title TEXT, price TEXT, orginal_price TEXT, nick TEXT, detail_url TEXT, pic_url TEXT, brand TEXT, cid TEXT, seller_id TEXT, shop_id TEXT, sales TEXT, raw_json TEXT NOT NULL, created_at TEXT, updated_at TEXT);
+                CREATE TABLE item_detail_state (num_iid TEXT PRIMARY KEY, status TEXT, last_error TEXT, created_at TEXT, updated_at TEXT);
+                """
+            )
+            for idx in range(1, 6):
+                num_iid = str(idx)
+                updated_at = "2026-07-28T01:00:00+00:00" if idx >= 4 else "2026-07-27T01:00:00+00:00"
+                raw = json.dumps({"item": {"num_iid": num_iid, "title": num_iid, "item_imgs": [{"url": f"//img/{num_iid}.jpg"}]}}, ensure_ascii=False)
+                conn.execute("INSERT INTO item_detail_sources VALUES ('润滑液', '', ?, ?, 'old')", (idx, num_iid))
+                conn.execute("INSERT INTO item_details VALUES (?, ?, '', '', '', '', '', '', '', '', '', '', ?, 'old', ?)", (num_iid, num_iid, raw, updated_at))
+                conn.execute("INSERT INTO item_detail_state VALUES (?, 'success', NULL, 'old', 'old')", (num_iid,))
+            conn.commit(); conn.close()
+
+            items = uploader.load_detail_source_items(
+                db_path,
+                updated_since="2026-07-28T00:00:00+00:00",
+                target_per_keyword_total=4,
+            )
+
+            self.assertEqual([item["product_title"] for item in items], ["4"])
+
+
 if __name__ == "__main__":
     unittest.main()

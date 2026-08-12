@@ -307,8 +307,8 @@ def crawl_items(config, fetcher=None, store=None):
                 response = throttled_fetch_once(active_config, num_iid)
                 parse_item_response(response)
                 return response
-            except Exception as exc:
-                if "error_code=5000" not in str(exc) or active_config.item_api == "item_get_pro":
+            except Exception:
+                if active_config.item_api == "item_get_pro":
                     raise
                 pro_config = replace(config, item_api="item_get_pro")
                 response = throttled_fetch_once(pro_config, num_iid)

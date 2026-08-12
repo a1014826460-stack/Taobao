@@ -53,6 +53,7 @@ class JDItemCrawlerConfig:
     delay: float = 0.5
     timeout: float = 20.0
     retries: int = 3
+    item_api: str = "item_get"
 
 
 @dataclass(frozen=True)
@@ -228,7 +229,28 @@ def crawl_jd_items(config, fetcher=None, store=None):
 
             store.mark_pending(num_iid)
             try:
-                response = fetcher(config, num_iid)
+                try:
+                    response = fetcher(config, num_iid)
+                    parse_jd_item_response(response)
+                except Exception:
+                    if config.item_api == "item_get_pro":
+                        raise
+                    response = fetcher(
+                        JDItemCrawlerConfig(
+                            key=config.key,
+                            secret=config.secret,
+                            num_iids=config.num_iids,
+                            db_path=config.db_path,
+                            reset_items=config.reset_items,
+                            cache=config.cache,
+                            lang=config.lang,
+                            delay=config.delay,
+                            timeout=config.timeout,
+                            retries=config.retries,
+                            item_api="item_get_pro",
+                        ),
+                        num_iid,
+                    )
                 parse_jd_item_response(response)
                 store.save_item_detail(num_iid, response)
                 fetched += 1
@@ -249,7 +271,9 @@ def crawl_jd_items(config, fetcher=None, store=None):
 
 
 def fetch_jd_item_detail(config, num_iid, opener=urlopen):
-    base_url = "https://api-gw.fan-b.com/jd/item_get_pro/"
+    if config.item_api not in {"item_get", "item_get_pro"}:
+        raise ValueError("item_api must be 'item_get' or 'item_get_pro'")
+    base_url = f"https://api-gw.fan-b.com/jd/{config.item_api}/"
     params = {
         "key": config.key,
         "num_iid": str(num_iid),
@@ -275,7 +299,7 @@ def fetch_jd_item_detail(config, num_iid, opener=urlopen):
 
 def build_arg_parser():
     parser = argparse.ArgumentParser(
-        description="Lightweight resumable crawler for Fan-B JD item_get_pro API."
+        description="Resumable crawler for Fan-B JD item_get with item_get_pro fallback."
     )
     parser.add_argument("--env", default="password.env", help="Path to key/secret env file.")
     parser.add_argument(
@@ -306,6 +330,7 @@ def build_arg_parser():
     parser.add_argument("--delay", type=float, default=0.5, help="Delay in seconds between requests.")
     parser.add_argument("--timeout", type=float, default=20.0, help="HTTP timeout in seconds.")
     parser.add_argument("--retries", type=int, default=3, help="HTTP retries per request.")
+    parser.add_argument("--item-api", choices=["item_get", "item_get_pro"], default="item_get", help="Primary Fan-B detail endpoint.")
     return parser
 
 
@@ -341,6 +366,7 @@ def config_from_args(args):
         delay=float(args.delay),
         timeout=float(args.timeout),
         retries=int(args.retries),
+        item_api=str(args.item_api),
     )
 
 

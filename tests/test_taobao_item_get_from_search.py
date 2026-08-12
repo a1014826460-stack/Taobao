@@ -150,7 +150,7 @@ class SearchSeededItemGetTests(unittest.TestCase):
             self.assertEqual(result.skipped, 1)
             self.assertEqual(result.fetched, 1)
             self.assertEqual(result.failed, 1)
-            self.assertEqual(sorted(fetched), ["101", "102"])
+            self.assertEqual(sorted(fetched), ["101", "102", "102"])
             conn = sqlite3.connect(db_path)
             self.assertEqual(conn.execute("SELECT status FROM item_detail_state WHERE num_iid = '102'").fetchone()[0], "error")
             conn.close()
@@ -206,6 +206,27 @@ class SearchSeededItemGetTests(unittest.TestCase):
 
             self.assertEqual(calls, ["item_get", "item_get_pro"])
             self.assertEqual(result.fetched, 1)
+
+
+    def test_default_fetcher_tries_item_get_pro_after_item_get_request_retries_fail(self):
+        with tempfile.TemporaryDirectory() as directory:
+            db_path = Path(directory) / "items.sqlite3"
+            config = item.ItemCrawlerConfig(
+                key="key", secret="secret", num_iids=["503"], db_path=str(db_path), delay=0, item_api="item_get"
+            )
+            calls = []
+
+            def fetcher(crawler_config, num_iid):
+                calls.append(crawler_config.item_api)
+                if crawler_config.item_api == "item_get":
+                    raise RuntimeError("request failed after 3 attempt(s): HTTP Error 503: Service Temporarily Unavailable")
+                return detail_response(num_iid)
+
+            result = item.crawl_items(config, fetcher=fetcher)
+
+            self.assertEqual(calls, ["item_get", "item_get_pro"])
+            self.assertEqual(result.fetched, 1)
+            self.assertEqual(result.failed, 0)
 
     def test_http_503_after_retries_is_abandoned_and_not_retried(self):
         with tempfile.TemporaryDirectory() as directory:

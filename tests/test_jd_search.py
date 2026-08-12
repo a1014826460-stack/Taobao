@@ -39,6 +39,25 @@ class JDSearchRequestAndParserTests(unittest.TestCase):
         self.assertIn("sort=_sale", request.full_url)
         self.assertIn("cache=no", request.full_url)
 
+    def test_build_search_request_can_target_item_search_pro_endpoint(self):
+        config = search.JDSearchCrawlerConfig(key="key", secret="secret", query="跳蛋", sort="")
+
+        request = search.build_search_request(config, 7, api="item_search_pro")
+
+        self.assertTrue(request.full_url.startswith("https://api-gw.fan-b.com/jd/item_search_pro/?"))
+        self.assertIn("q=%E8%B7%B3%E8%9B%8B", request.full_url)
+        self.assertIn("page=7", request.full_url)
+        self.assertIn("sort=", request.full_url)
+        self.assertIn("lang=zh-CN", request.full_url)
+
+    def test_build_search_request_accepts_empty_sort(self):
+        config = search.JDSearchCrawlerConfig(key="key", secret="secret", query="跳蛋", sort="")
+
+        request = search.build_search_request(config, 1)
+
+        self.assertIn("/jd/item_search/?", request.full_url)
+        self.assertIn("sort=", request.full_url)
+
     def test_build_search_request_accepts_supported_sort_values(self):
         for sort in ["bid", "_bid", "_sale", "_review", "_new"]:
             config = search.JDSearchCrawlerConfig(key="key", secret="secret", query="手机", sort=sort)
@@ -115,6 +134,81 @@ class JDSearchRequestAndParserTests(unittest.TestCase):
         self.assertEqual(len(calls), 1)
 
 
+    def test_fetch_search_page_with_fallback_does_not_call_pro_when_item_search_succeeds(self):
+        calls = []
+
+        class FakeResponse:
+            def __enter__(self):
+                return self
+            def __exit__(self, exc_type, exc, traceback):
+                return False
+            def read(self):
+                return b'{"error_code":"0000","items":{"page":1,"item":[{"num_iid":"100"}]}}'
+
+        def opener(request, timeout):
+            calls.append(request.full_url)
+            return FakeResponse()
+
+        config = search.JDSearchCrawlerConfig(key="key", secret="secret", query="跳蛋", retries=3)
+        response = search.fetch_search_page_with_fallback(config, 1, opener=opener)
+
+        self.assertEqual(response["items"]["item"][0]["num_iid"], "100")
+        self.assertEqual(len(calls), 1)
+        self.assertIn("/jd/item_search/?", calls[0])
+        self.assertNotIn("item_search_pro", calls[0])
+
+    def test_fetch_search_page_uses_pro_directly_after_normal_page_limit(self):
+        calls = []
+
+        class FakeResponse:
+            def __enter__(self):
+                return self
+            def __exit__(self, exc_type, exc, traceback):
+                return False
+            def read(self):
+                return b'{"error_code":"0000","items":{"page":8,"item":[{"num_iid":"pro-8"}]}}'
+
+        def opener(request, timeout):
+            calls.append(request.full_url)
+            return FakeResponse()
+
+        config = search.JDSearchCrawlerConfig(key="key", secret="secret", query="黄小米", retries=1)
+        response = search.fetch_search_page_for_page(config, 8, opener=opener)
+
+        self.assertEqual(response["items"]["item"][0]["num_iid"], "pro-8")
+        self.assertEqual(len(calls), 1)
+        self.assertIn("/jd/item_search_pro/", calls[0])
+
+    def test_fetch_search_page_with_fallback_calls_pro_after_item_search_retries_fail(self):
+        calls = []
+
+        class FakeResponse:
+            def __init__(self, body):
+                self.body = body
+            def __enter__(self):
+                return self
+            def __exit__(self, exc_type, exc, traceback):
+                return False
+            def read(self):
+                return self.body.encode("utf-8")
+
+        def opener(request, timeout):
+            calls.append(request.full_url)
+            if "/jd/item_search_pro/" in request.full_url:
+                return FakeResponse('{"error_code":"0000","items":{"page":7,"item":[{"num_iid":"pro-7"}]}}')
+            return FakeResponse('{"error_code":"5000","reason":"data error"}')
+
+        config = search.JDSearchCrawlerConfig(key="key", secret="secret", query="跳蛋", sort="", retries=3)
+        response = search.fetch_search_page_with_fallback(config, 7, opener=opener)
+
+        self.assertEqual(response["items"]["item"][0]["num_iid"], "pro-7")
+        self.assertEqual(len(calls), 4)
+        self.assertTrue(all("/jd/item_search/?" in url for url in calls[:3]))
+        self.assertIn("https://api-gw.fan-b.com/jd/item_search_pro/?", calls[3])
+        self.assertIn("q=%E8%B7%B3%E8%9B%8B", calls[3])
+        self.assertIn("page=7", calls[3])
+        self.assertIn("sort=", calls[3])
+
 class JDSearchStoreAndCrawlTests(unittest.TestCase):
     def test_save_page_upserts_raw_page_item_and_success_state(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -177,6 +271,25 @@ class JDSearchStoreAndCrawlTests(unittest.TestCase):
             self.assertEqual(db.execute("SELECT status FROM jd_search_state WHERE page = 2").fetchone()[0], "error")
             db.close()
 
+    def test_crawl_only_requests_configured_page_range(self):
+        with tempfile.TemporaryDirectory() as directory:
+            config = search.JDSearchCrawlerConfig(
+                key="key", secret="secret", query="黄小米",
+                db_path=str(Path(directory) / "jd_search.sqlite3"), start_page=8, max_pages=10,
+            )
+            requested_pages = []
+
+            def fetcher(_, page):
+                requested_pages.append(page)
+                return response_for(page)
+
+            result = search.crawl_search(config, fetcher=fetcher)
+
+            self.assertEqual(requested_pages, [8, 9, 10])
+            self.assertEqual(result.requested_pages, 3)
+
 
 if __name__ == "__main__":
     unittest.main()
+
+

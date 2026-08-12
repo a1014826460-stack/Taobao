@@ -237,13 +237,38 @@ class JDFetchAndCliTests(unittest.TestCase):
         query = parse_qs(urlparse(captured["url"]).query)
 
         self.assertEqual(response["error_code"], "0000")
-        self.assertIn("/jd/item_get_pro/", captured["url"])
+        self.assertIn("/jd/item_get/", captured["url"])
         self.assertEqual(captured["timeout"], 9)
         self.assertEqual(query["key"], ["demo-key"])
         self.assertEqual(query["secret"], ["demo-secret"])
         self.assertEqual(query["num_iid"], ["10025990353889"])
         self.assertEqual(query["cache"], ["no"])
         self.assertEqual(query["lang"], ["zh-CN"])
+
+    def test_fetch_jd_item_detail_uses_normal_item_get_by_default(self):
+        captured = {}
+
+        class FakeResponse:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, traceback):
+                return False
+
+            def read(self):
+                return b'{"item":{"num_iid":"10025990353889"},"error_code":"0000"}'
+
+        def opener(request, timeout):
+            captured["url"] = request.full_url
+            return FakeResponse()
+
+        config = JDItemCrawlerConfig(
+            key="demo-key", secret="demo-secret", num_iids=["10025990353889"], retries=1,
+        )
+        fetch_jd_item_detail(config, "10025990353889", opener=opener)
+
+        self.assertIn("/jd/item_get/", captured["url"])
+        self.assertNotIn("/jd/item_get_pro/", captured["url"])
 
     def test_parse_cli_args_requires_num_iids_for_normal_run(self):
         parser = build_arg_parser()

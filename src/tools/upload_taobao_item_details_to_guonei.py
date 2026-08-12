@@ -79,32 +79,33 @@ def build_detail_push_item(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def load_detail_source_items(db_path: str | Path, *, include_failed: bool = True, per_keyword_limit: int | None = None, updated_since: str | None = None) -> list[dict[str, Any]]:
+def load_detail_source_items(
+    db_path: str | Path,
+    *,
+    include_failed: bool = True,
+    per_keyword_limit: int | None = None,
+    updated_since: str | None = None,
+    source_created_since: str | None = None,
+    target_per_keyword_total: int | None = None,
+) -> list[dict[str, Any]]:
     db = sqlite3.connect(str(db_path))
     db.row_factory = sqlite3.Row
     try:
         status_filter = ""
         if not include_failed:
             status_filter = "AND st.status = 'success'"
-        updated_filter = ""
-        params: list[Any] = []
-        if updated_since:
-            updated_filter = "AND d.updated_at >= ?"
-            params.append(updated_since)
         rows = db.execute(
             f"""
-            SELECT s.keyword, s.sort, s.page, s.num_iid,
-                   d.title, d.detail_url, d.raw_json,
+            SELECT s.keyword, s.sort, s.page, s.num_iid, s.created_at AS source_created_at,
+                   d.title, d.detail_url, d.raw_json, d.updated_at AS detail_updated_at,
                    st.status, st.last_error
             FROM item_detail_sources s
             LEFT JOIN item_details d ON d.num_iid = s.num_iid
             LEFT JOIN item_detail_state st ON st.num_iid = s.num_iid
             WHERE COALESCE(st.status, '') IN ('success', 'blocked_5000', 'error')
             {status_filter}
-            {updated_filter}
             ORDER BY s.keyword, s.page, s.sort, s.num_iid
-            """,
-            params,
+            """
         ).fetchall()
         items: list[dict[str, Any]] = []
         counts_by_keyword: dict[str, int] = {}
@@ -115,13 +116,27 @@ def load_detail_source_items(db_path: str | Path, *, include_failed: bool = True
             num_iid = str(row_dict.get("num_iid") or "")
             if num_iid in seen_by_keyword.setdefault(keyword, set()):
                 continue
-            if per_keyword_limit is not None and counts_by_keyword.get(keyword, 0) >= per_keyword_limit:
-                continue
             mapped = build_detail_push_item(row_dict)
-            if mapped["image_urls"]:
-                seen_by_keyword[keyword].add(num_iid)
-                counts_by_keyword[keyword] = counts_by_keyword.get(keyword, 0) + 1
-                items.append(mapped)
+            if not mapped["image_urls"]:
+                continue
+
+            seen_by_keyword[keyword].add(num_iid)
+            counts_by_keyword[keyword] = counts_by_keyword.get(keyword, 0) + 1
+            current_total = counts_by_keyword[keyword]
+
+            if per_keyword_limit is not None and current_total > per_keyword_limit:
+                continue
+            if target_per_keyword_total is not None and current_total > target_per_keyword_total:
+                continue
+            if updated_since or source_created_since:
+                detail_updated_at = str(row_dict.get("detail_updated_at") or "")
+                source_created_at = str(row_dict.get("source_created_at") or "")
+                is_incremental = (updated_since and detail_updated_at >= updated_since) or (
+                    source_created_since and source_created_at >= source_created_since
+                )
+                if not is_incremental:
+                    continue
+            items.append(mapped)
         return items
     finally:
         db.close()
@@ -176,6 +191,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--success-only", action="store_true", help="Only upload successfully fetched item_get rows.")
     parser.add_argument("--per-keyword-limit", type=int, default=None, help="Max unique pushed products per keyword.")
     parser.add_argument("--updated-since", default=None, help="Only upload item_details rows updated at/after this ISO timestamp.")
+    parser.add_argument("--source-created-since", default=None, help="Also upload source rows first associated at/after this ISO timestamp.")
+    parser.add_argument("--target-per-keyword-total", type=int, default=None, help="When doing incremental upload, only send rows whose per-keyword rank is within this total target.")
     parser.add_argument("--dry-run", action="store_true", help="Print count only; do not POST.")
     return parser
 
@@ -183,7 +200,14 @@ def build_arg_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_arg_parser().parse_args(argv)
     try:
-        items = load_detail_source_items(args.db, include_failed=not args.success_only, per_keyword_limit=args.per_keyword_limit, updated_since=args.updated_since)
+        items = load_detail_source_items(
+            args.db,
+            include_failed=not args.success_only,
+            per_keyword_limit=args.per_keyword_limit,
+            updated_since=args.updated_since,
+            source_created_since=args.source_created_since,
+            target_per_keyword_total=args.target_per_keyword_total,
+        )
         if args.dry_run:
             print(f"Prepared {len(items)} Guonei suite-image items; no requests sent.")
             return 0

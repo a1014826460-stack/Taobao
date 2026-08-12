@@ -9,6 +9,7 @@ from typing import Any, Mapping
 from urllib.parse import quote_plus
 
 from .human_behavior import DelayPolicy, humanize_page
+from .accounts import parse_cookie_text
 from .network_capture import build_network_record
 from .risk_control import classify_risk, RiskDecision
 
@@ -64,6 +65,7 @@ class BrowserCrawler:
         self.browser_pool = browser_pool
         self.config = config or CrawlerConfig()
         self._capture_tasks: list[asyncio.Task] = []
+        self._cookies_loaded: set[str] = set()
         # Register supplied accounts in repository when possible.
         for account in getattr(browser_pool, "accounts", {}).values():
             try:
@@ -97,6 +99,7 @@ class BrowserCrawler:
                 progressed = True
                 try:
                     browser = await self.browser_pool.start_account(account_id)
+                    await self._ensure_cookies(account_id, browser)
                     if task.get("task_type") == "keyword":
                         await self.crawl_search_page(task, browser)
                     else:
@@ -125,6 +128,27 @@ class BrowserCrawler:
             if not progressed:
                 break
         return {"completed": completed, "failed": failed, "paused_accounts": paused}
+
+    async def _ensure_cookies(self, account_id: str, account_browser) -> None:
+        """Load an account's cookie file once, when a source path is available."""
+        if account_id in self._cookies_loaded:
+            return
+        account = getattr(self.browser_pool, "accounts", {}).get(account_id)
+        source = getattr(account, "cookie_source", None) if account is not None else None
+        if source is None and isinstance(account, Mapping):
+            source = account.get("cookie_source")
+        if source:
+            try:
+                from pathlib import Path
+                path = Path(str(source))
+                if path.is_file():
+                    cookies = parse_cookie_text(path.read_text(encoding="utf-8-sig"), str(path))
+                    await account_browser.install_cookies(cookies)
+            except Exception:
+                # Cookie parsing failures are handled as a regular navigation failure;
+                # do not leak cookie values in the exception or logs.
+                raise RuntimeError("account cookie initialization failed")
+        self._cookies_loaded.add(account_id)
 
     def _search_url(self, platform: str, keyword: str, page_no: int) -> str:
         q = quote_plus(str(keyword))

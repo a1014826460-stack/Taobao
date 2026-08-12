@@ -23,7 +23,9 @@ class DelayPolicy:
         return self._rng.uniform(self.min_seconds, self.max_seconds)
 
     async def wait(self, seconds: float | None = None) -> None:
-        delay = self.sample() if seconds is None else seconds
+        delay = self.sample() if seconds is None else float(seconds)
+        if seconds is not None and (delay < 0 or delay > self.max_seconds):
+            raise ValueError("wait seconds must be within 0..max_seconds")
         if self.sleep_func is not None:
             result = self.sleep_func(delay)
             if hasattr(result, "__await__"):
@@ -63,7 +65,9 @@ async def humanize_page(page, policy: DelayPolicy, rng=None) -> None:
         total_height = await _maybe_await(page.evaluate("() => document.documentElement.scrollHeight"))
     except Exception:
         total_height = None
-    if total_height is not None and float(total_height) <= height * 1.15:
+    if total_height is None:
+        return
+    if float(total_height) <= height * 1.15:
         return
     if mouse is None or not hasattr(mouse, "wheel"):
         return

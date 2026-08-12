@@ -15,7 +15,7 @@ class BrowserCrawlerRepository:
         self.conn=sqlite3.connect(str(self.db_path), timeout=30, isolation_level=None)
         self.conn.row_factory=sqlite3.Row
         self.conn.execute("PRAGMA foreign_keys=ON"); self.conn.execute("PRAGMA journal_mode=WAL"); self.conn.execute("PRAGMA busy_timeout=30000")
-        self._schema()
+        self._schema(); self._migrate_tasks()
     def close(self): self.conn.close()
     def _schema(self):
         self.conn.executescript('''
@@ -30,6 +30,22 @@ CREATE TABLE IF NOT EXISTS product_details (platform TEXT NOT NULL, item_id TEXT
 CREATE TABLE IF NOT EXISTS product_comments (platform TEXT NOT NULL, item_id TEXT NOT NULL, comment_id TEXT NOT NULL, rating TEXT, content TEXT, author_redacted TEXT, raw_json TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY(platform,item_id,comment_id));
 CREATE TABLE IF NOT EXISTS seller_infos (platform TEXT NOT NULL, item_id TEXT NOT NULL, seller_id TEXT, shop_name TEXT, level TEXT, ratings_json TEXT, raw_json TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY(platform,item_id));
 ''')
+    def _migrate_tasks(self):
+        rows=self.conn.execute("PRAGMA index_list('crawl_tasks')").fetchall()
+        old=False
+        for r in rows:
+            if r['unique']:
+                cols=[x['name'] for x in self.conn.execute(f"PRAGMA index_info('{r['name']}')").fetchall()]
+                if cols==['task_type','keyword','page_no']: old=True
+        if not old: return
+        self.conn.execute('BEGIN IMMEDIATE')
+        try:
+            self.conn.execute('ALTER TABLE crawl_tasks RENAME TO crawl_tasks_old')
+            self.conn.execute('''CREATE TABLE crawl_tasks (task_id TEXT PRIMARY KEY, task_type TEXT NOT NULL CHECK(task_type IN ('keyword','detail')), keyword TEXT, item_id TEXT, platform TEXT, page_no INTEGER, source_url TEXT, status TEXT NOT NULL DEFAULT 'pending', account_id TEXT, attempts INTEGER NOT NULL DEFAULT 0, error TEXT, next_run_at TEXT, run_id TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY(account_id) REFERENCES accounts(account_id), FOREIGN KEY(run_id) REFERENCES crawl_runs(run_id), UNIQUE(task_type,platform,keyword,page_no), UNIQUE(task_type,platform,item_id))''')
+            self.conn.execute('''INSERT INTO crawl_tasks SELECT task_id,task_type,keyword,item_id,COALESCE(platform,'taobao'),page_no,source_url,status,account_id,attempts,error,next_run_at,run_id,created_at,updated_at FROM crawl_tasks_old''')
+            self.conn.execute('DROP TABLE crawl_tasks_old'); self.conn.execute('CREATE INDEX IF NOT EXISTS idx_tasks_status_next ON crawl_tasks(status,next_run_at)'); self.conn.execute('CREATE INDEX IF NOT EXISTS idx_tasks_account ON crawl_tasks(account_id,status)'); self.conn.commit()
+        except Exception:
+            self.conn.rollback(); raise
     def create_run(self,input_source,options):
         rid=str(uuid.uuid4()); self.conn.execute('INSERT INTO crawl_runs VALUES (?,?,?,?,?,?)',(rid,_now(),None,input_source,_json(options),None)); return rid
     def finish_run(self,run_id,summary): self.conn.execute('UPDATE crawl_runs SET finished_at=?,summary_json=? WHERE run_id=?',(_now(),_json(summary),run_id))

@@ -10,8 +10,16 @@ from .repository import BrowserCrawlerRepository
 from .browser_pool import BrowserPool
 
 
+class _Parser(argparse.ArgumentParser):
+    def parse_args(self, args=None, namespace=None):
+        parsed = super().parse_args(args, namespace)
+        if parsed.from_tasks and parsed.keyword:
+            self.error("--keyword cannot be combined with --from-tasks")
+        return parsed
+
+
 def build_arg_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="taobao-browser-crawler", description="Capture Taobao/Tmall search and detail JSON")
+    p = _Parser(prog="taobao-browser-crawler", description="Capture Taobao/Tmall search and detail JSON")
     mode = p.add_argument_group("input")
     mode.add_argument("--keyword", action="append", default=[], help="search keyword (repeatable)")
     mode.add_argument("--from-tasks", action="store_true", help="consume pending tasks from SQLite")
@@ -55,7 +63,7 @@ def _accounts_from_args(args):
         return discover_accounts(args.cookie_dir)
     # A conventional accounts directory is optional; caller gets a clear error
     # if it does not exist or contains no cookie files.
-    default = Path("accounts")
+    default = Path("cookies/accounts")
     return discover_accounts(default) if default.exists() else []
 
 
@@ -76,7 +84,7 @@ async def _run(args: argparse.Namespace) -> int:
         else:
             raise ValueError("provide at least one --keyword or use --from-tasks")
         # Failed or paused work is an uncompleted run; callers can resume later.
-        return 1 if summary.get("failed", 0) else 0
+        return 1 if (summary.get("failed", 0) or summary.get("paused_accounts", 0)) else 0
     finally:
         await pool.close_all()
         repo.close()

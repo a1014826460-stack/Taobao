@@ -103,6 +103,10 @@ class BrowserCrawler:
                     await self._ensure_cookies(account_id, browser)
                     if task.get("task_type") == "keyword":
                         await self.crawl_search_page(task, browser)
+                    elif self.config.search_only:
+                        self.repository.complete_task(task["task_id"])
+                        completed += 1
+                        continue
                     else:
                         await self.crawl_detail(task, browser)
                     self.repository.complete_task(task["task_id"])

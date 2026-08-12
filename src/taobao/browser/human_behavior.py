@@ -69,7 +69,7 @@ async def humanize_page(page, policy: DelayPolicy, rng=None) -> None:
         return
     try:
         total_height = float(total_height)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return
     if not math.isfinite(total_height) or total_height <= height * 1.15:
         return

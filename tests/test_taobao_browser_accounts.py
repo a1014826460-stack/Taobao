@@ -43,3 +43,14 @@ def test_redaction_never_exposes_value():
     out = redact_cookie_value(value)
     assert value not in out and out != value
     assert redact_cookie_value(value) == out
+
+def test_json_boolean_flags_reject_string_values():
+    with pytest.raises(ValueError):
+        parse_cookie_text(json.dumps([{'name':'x','value':'y','secure':'false'}]), 'x')
+    with pytest.raises(ValueError):
+        parse_cookie_text(json.dumps([{'name':'x','value':'y','httpOnly':'true'}]), 'x')
+
+def test_netscape_secure_flag_is_strict():
+    text = '.taobao.com\tTRUE\t/\tMAYBE\t0\tsid\tx'
+    with pytest.raises(ValueError):
+        parse_cookie_text(text, 'x')

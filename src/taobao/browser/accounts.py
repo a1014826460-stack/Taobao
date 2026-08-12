@@ -57,12 +57,15 @@ def _cookie(name: Any, value: Any, source: str, **kwargs: Any) -> CookieRecord:
     expires = kwargs.get("expires")
     if expires is not None and (isinstance(expires, bool) or not isinstance(expires, (int, float))):
         raise ValueError("cookie expires must be numeric")
+    http_only = kwargs.get("httpOnly", kwargs.get("http_only", False))
+    secure = kwargs.get("secure", False)
+    if not isinstance(http_only, bool) or not isinstance(secure, bool):
+        raise ValueError("cookie httpOnly and secure flags must be booleans")
     same_site = kwargs.get("sameSite", kwargs.get("same_site"))
     if same_site is not None and same_site not in {"Strict", "Lax", "None"}:
         raise ValueError("invalid sameSite value")
     return CookieRecord(name=name.strip(), value=value, domain=domain, path=path, expires=expires,
-                        http_only=bool(kwargs.get("httpOnly", kwargs.get("http_only", False))),
-                        secure=bool(kwargs.get("secure", False)), same_site=same_site)
+                        http_only=http_only, secure=secure, same_site=same_site)
 
 
 def _parse_json(data: Any, source: str) -> list[CookieRecord]:
@@ -111,13 +114,18 @@ def parse_cookie_text(text: str, source: str) -> list[CookieRecord]:
                 exp = int(expires)
             except ValueError as exc:
                 raise ValueError("invalid Netscape expiry") from exc
-            result.append(_cookie(name, value, source, domain=domain, path=path, secure=secure.upper() == "TRUE", expires=exp,
+            secure_flag = secure.upper()
+            if secure_flag not in {"TRUE", "FALSE"}:
+                raise ValueError("invalid Netscape secure flag")
+            result.append(_cookie(name, value, source, domain=domain, path=path, secure=secure_flag == "TRUE", expires=exp,
                                   httpOnly=line.startswith("#HttpOnly_")))
         return result
 
     # Cookie header style: name=value; name2=value2
     result = []
-    for item in stripped.split(";"):
+    for index, item in enumerate(stripped.split(";")):
+        if not item.strip() and index == len(stripped.split(";")) - 1:
+            continue
         if "=" not in item:
             raise ValueError("malformed semicolon cookie entry")
         name, value = item.split("=", 1)

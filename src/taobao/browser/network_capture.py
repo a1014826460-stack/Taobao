@@ -6,6 +6,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 _SECRET_KEYS = re.compile(r"(?:cookie|set[-_]?cookie|authorization|x[-_]?token|token|sign|signature|auth)", re.I)
 _MAX_BODY = 2 * 1024 * 1024
+_SECRET_VALUE_RE = re.compile(r'(?i)((?:x[-_]?token|set[-_]?cookie|authorization|signature|token|sign|cookie)\s*[=:]\s*)(?:"[^"\r\n]*"|\'[^\'\r\n]*\'|[^&;\r\n]*)')
 
 
 def _is_secret_key(key: str) -> bool:
@@ -32,6 +33,12 @@ def _redact_obj(value: Any) -> Any:
     if isinstance(value, dict):
         return {k: ('[REDACTED]' if _is_secret_key(str(k)) else _redact_obj(v)) for k,v in value.items()}
     if isinstance(value, list): return [_redact_obj(v) for v in value]
+    if isinstance(value, str):
+        # Nested URLs and plain text values can carry credentials even when their
+        # dictionary key is innocuous (e.g. next_url). Apply both URL query and
+        # key/value redaction while preserving non-sensitive text.
+        redacted = redact_url(value) if ('?' in value or '://' in value) else value
+        return _SECRET_VALUE_RE.sub(r'\1[REDACTED]', redacted)
     return value
 
 

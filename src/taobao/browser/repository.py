@@ -115,5 +115,3 @@ CREATE TABLE IF NOT EXISTS seller_infos (platform TEXT NOT NULL, item_id TEXT NO
     def upsert_comment(self,r): self.conn.execute('''INSERT INTO product_comments VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(platform,item_id,comment_id) DO UPDATE SET rating=excluded.rating,content=excluded.content,author_redacted=excluded.author_redacted,raw_json=excluded.raw_json,updated_at=excluded.updated_at''',(r['platform'],r['item_id'],r['comment_id'],r.get('rating'),r.get('content'),r.get('author_redacted'),_json(r.get('raw_json',r)),_now()))
     def upsert_seller(self,r): self.conn.execute('''INSERT INTO seller_infos VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(platform,item_id) DO UPDATE SET seller_id=excluded.seller_id,shop_name=excluded.shop_name,level=excluded.level,ratings_json=excluded.ratings_json,raw_json=excluded.raw_json,updated_at=excluded.updated_at''',(r['platform'],r['item_id'],r.get('seller_id'),r.get('shop_name'),r.get('level'),_json(r.get('ratings',r.get('ratings_json'))),_json(r.get('raw_json',r)),_now()))
 
-
-
